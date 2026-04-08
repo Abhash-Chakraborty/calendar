@@ -241,7 +241,7 @@ export default function NotesPanel({
 
     onLabelsChange?.([
       ...labels,
-      { name: trimmed.slice(0, 18), color: draftLabelColor },
+      { name: trimmed.slice(0, 10), color: draftLabelColor },
     ])
 
     setDraftLabelName('')
@@ -367,7 +367,7 @@ export default function NotesPanel({
                     className="notes-label-input"
                     type="text"
                     value={draftLabelName}
-                    maxLength={18}
+                    maxLength={10}
                     onChange={(e) => setDraftLabelName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {

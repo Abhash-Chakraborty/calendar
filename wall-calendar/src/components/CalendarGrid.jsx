@@ -305,22 +305,13 @@ export default function CalendarGrid({
               </div>
               
               {cell.eventColors && cell.eventColors.length > 0 && (
-                <div className="event-dots-container" style={{ 
-                  display: 'flex', 
-                  gap: '3px', 
-                  position: 'absolute', 
-                  bottom: '6px',
-                  justifyContent: 'center',
-                  width: '100%' 
-                }}>
+                <div className="event-dots-container">
                   {cell.eventColors.map((color, i) => (
-                    <div key={i} style={{ 
-                      width: '5px', 
-                      height: '5px', 
-                      borderRadius: '50%', 
-                      backgroundColor: color,
-                      boxShadow: '0 0 2px rgba(0,0,0,0.1)'
-                    }} />
+                    <span
+                      key={i}
+                      className="event-dot"
+                      style={{ backgroundColor: color }}
+                    />
                   ))}
                 </div>
               )}

@@ -1,12 +1,13 @@
 import { useMemo } from 'react'
 
 export default function SpiralBinding() {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 720
   const holeOffset = 0
-  const holeRadius = 4.5
-  const holeY = 15
+  const holeRadius = isMobile ? 4 : 4.5
+  const holeY = isMobile ? 14 : 15
 
   const rings = useMemo(() => {
-    const count = typeof window !== 'undefined' && window.innerWidth < 500 ? 22 : 30
+    const count = typeof window !== 'undefined' && window.innerWidth <= 720 ? 14 : 30
     return Array.from({ length: count }, (_, i) => {
       // Predictable spacing
       const percentage = ((i + 1) / (count + 1)) * 100
