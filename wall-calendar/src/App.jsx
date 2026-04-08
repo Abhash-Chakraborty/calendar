@@ -438,6 +438,9 @@ function App() {
   return (
     <div className="app-wrapper">
       <div className="top-controls">
+        <a href="https://abhashchakraborty.tech/" target="_blank" rel="noopener noreferrer" className="logo-badge" aria-label="Wall Calendar logo">
+          <img src="/Logo.svg" alt="Wall Calendar logo" />
+        </a>
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </div>
       <div className="calendar-shadow-layer">

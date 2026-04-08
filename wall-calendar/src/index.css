@@ -11,15 +11,21 @@
   --bg-primary: #e8e2d8;
   --bg-secondary: #faf8f5;
   --bg-card: #ffffff;
+  --bg-elevated: #f4efe6;
+  --bg-hover: rgba(26, 26, 46, 0.08);
   --bg-input: #f5f3ef;
   --text-primary: #1a1a2e;
   --text-secondary: #4a4a5a;
   --text-muted: #8a8a9a;
+  --text-tertiary: #6f6f82;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Playfair Display', serif;
   --accent: #2e86ab;
   --accent-light: #d4eef8;
   --accent-dark: #1b6d8e;
   --accent-hover: #247091;
   --range-bg: #e8f4f8;
+  --border-color: #ddd8ce;
   --border: #ddd8ce;
   --border-light: #eae6de;
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
@@ -54,15 +60,19 @@
   --bg-primary: #0d0d18;
   --bg-secondary: #161628;
   --bg-card: #1a1a30;
+  --bg-elevated: #23233a;
+  --bg-hover: rgba(232, 230, 240, 0.08);
   --bg-input: #222240;
   --text-primary: #e8e6f0;
   --text-secondary: #b0aec0;
   --text-muted: #6a6880;
+  --text-tertiary: #8d8ba0;
   --accent: #4ecdc4;
   --accent-light: #1a3a38;
   --accent-dark: #3ab5ad;
   --accent-hover: #45b8b0;
   --range-bg: #1a2e2d;
+  --border-color: #2a2a42;
   --border: #2a2a42;
   --border-light: #1e1e36;
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
@@ -86,7 +96,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;

@@ -32,6 +32,40 @@
   overflow: hidden;
 }
 
+.logo-badge {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: beige;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  z-index: 1000;
+  transition: all var(--transition);
+}
+
+.logo-badge img {
+  width: 22px;
+  height: 22px;
+  display: block;
+  object-fit: contain;
+  filter: invert(1);
+}
+
+[data-theme="dark"] .logo-badge {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .logo-badge img {
+  filter: none;
+}
+
 .theme-toggle:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--accent);
@@ -1220,6 +1254,8 @@
   body { padding: 16px 10px; }
 
   .theme-toggle { top: 12px; right: 12px; width: 42px; height: 42px; }
+  .logo-badge { top: 12px; left: 12px; width: 42px; height: 42px; }
+  .logo-badge img { width: 20px; height: 20px; }
 
   .calendar-container { border-radius: var(--radius-lg); }
 
@@ -1419,7 +1455,7 @@
 /* ===== PRINT ===== */
 @media print {
   body { background: #fff; padding: 0; }
-  .theme-toggle, .clear-btn, .notes-input-area, .nav-btn { display: none; }
+  .theme-toggle, .logo-badge, .clear-btn, .notes-input-area, .nav-btn { display: none; }
   .calendar-container { box-shadow: none; border: 1px solid #ccc; }
 }
 
