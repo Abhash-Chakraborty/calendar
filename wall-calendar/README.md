@@ -1,16 +1,86 @@
-# React + Vite
+# Wall Calendar - Frontend Engineering Challenge
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is my submission for the Frontend Engineering Challenge to build an interactive wall-calendar component inspired by a static reference design. I focused on translating the visual concept into a usable, responsive, and polished product.
 
-Currently, two official plugins are available:
+## What I Built
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- A wall-calendar style layout with a hero image area, month grid, and integrated notes/events panel.
+- Single-day and day-range selection with clear visual states for start, end, and in-range dates.
+- Notes tied to the active selection context (single day, range, or month).
+- Event management for selected dates (add/edit/delete) with event color markers in the calendar grid.
+- Holiday markers with hover/touch-friendly contextual hints.
 
-## React Compiler
+## How This Meets the Challenge Requirements
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1) Wall Calendar Aesthetic
 
-## Expanding the ESLint configuration
+- I designed the UI around a physical wall-calendar feel: prominent monthly imagery, layered paper styling, spiral binding treatment, and strong visual hierarchy.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2) Day Range Selector
+
+- Click/tap a date for single-day selection.
+- Press and drag to create a range selection.
+- Distinct styles are applied for:
+  - range start
+  - range end
+  - days in between
+
+### 3) Integrated Notes Section
+
+- The notes panel supports freeform notes and lightweight labels for organization.
+- Notes update based on the currently selected date or range.
+
+### 4) Fully Responsive Design
+
+- Desktop: segmented layout with calendar and notes side by side.
+- Mobile: stacked layout with touch-friendly controls and compact spacing to preserve usability.
+
+## Creative Enhancements Added
+
+- Animated month/page transitions to reinforce the wall-calendar interaction feel.
+- Theme toggle with synchronized transitions.
+- Event color dots and holiday indicators for quick scanability.
+- Mobile-focused interaction tuning for navigation, spacing, and readability.
+
+## Tech Stack
+
+- React
+- Vite
+- GSAP (animations)
+- CSS custom properties and responsive media queries
+
+## Frontend-Only Scope
+
+This submission is intentionally frontend-only as requested in the challenge. There is no backend/database/API. Data is persisted client-side using `localStorage`.
+
+## Run Locally
+
+```bash
+npm install
+npm run dev
+```
+
+## Lint and Build
+
+```bash
+npm run lint
+npm run build
+npm run preview
+```
+
+## Project Structure
+
+- `src/App.jsx` - app state, page composition, and transitions
+- `src/components/CalendarGrid.jsx` - calendar grid and range selection logic
+- `src/components/NotesPanel.jsx` - notes editor, labels, and event listing
+- `src/components/EventModal.jsx` - add/edit event modal
+- `src/components/MonthNav.jsx` - month navigation controls
+- `src/components/SpiralBinding.jsx` - wall-calendar binding visuals
+- `src/data/constants.js` - month and holiday constants
+- `src/App.css`, `src/index.css` - theme, layout, and responsive styles
+
+## Submission Links
+
+- Repository: `<add-repo-link>`
+- Video Demonstration (required): `<add-video-link>`
+- Live Demo (optional): `<add-live-demo-link>`
