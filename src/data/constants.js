@@ -4,18 +4,18 @@ export const MONTH_NAMES = [
 ]
 
 export const MONTH_IMAGES = {
-  0: '/images/01-january.png',
-  1: '/images/02-february.png',
-  2: '/images/03-march.png',
-  3: '/images/04-april.png',
-  4: '/images/05-may.png',
-  5: '/images/06-june.png',
-  6: '/images/07-july.png',
-  7: '/images/08-august.png',
-  8: '/images/09-september.png',
-  9: '/images/10-october.png',
-  10: '/images/11-november.png',
-  11: '/images/12-december.png',
+  0: '/images/01-january.jpg',
+  1: '/images/02-february.jpg',
+  2: '/images/03-march.jpg',
+  3: '/images/04-april.jpg',
+  4: '/images/05-may.jpg',
+  5: '/images/06-june.jpg',
+  6: '/images/07-july.jpg',
+  7: '/images/08-august.jpg',
+  8: '/images/09-september.jpg',
+  9: '/images/10-october.jpg',
+  10: '/images/11-november.jpg',
+  11: '/images/12-december.jpg',
 }
 
 // Month accent color palettes (primary, light, dark) for dynamic theming
