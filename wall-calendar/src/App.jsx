@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import anime from 'animejs'
+import { gsap } from 'gsap'
 import SpiralBinding from './components/SpiralBinding'
 import HeroSection from './components/HeroSection'
 import MonthNav from './components/MonthNav'
@@ -7,27 +7,54 @@ import CalendarGrid from './components/CalendarGrid'
 import NotesPanel from './components/NotesPanel'
 import ThemeToggle from './components/ThemeToggle'
 import HolidayTooltip from './components/HolidayTooltip'
+import EventModal from './components/EventModal'
 import { MONTH_NAMES, HOLIDAYS } from './data/constants'
 import './App.css'
 
+function normalizeNoteEntry(entry) {
+  if (typeof entry === 'string') {
+    return { text: entry, labels: [] }
+  }
+
+  return {
+    text: entry?.text || '',
+    labels: Array.isArray(entry?.labels) ? entry.labels.slice(0, 2) : [],
+  }
+}
+
 function App() {
   const today = new Date()
-  const stackLayerCount = 12
+  const targetMonth = today.getMonth()
+  const calendarYear = today.getFullYear()
   const stackLayerSpacing = 1.5
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth())
-  const [currentYear, setCurrentYear] = useState(today.getFullYear())
-  const [rangeStart, setRangeStart] = useState(null)
+
+  // Start at January (0) for the intro animation
+  const getTodayZero = () => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  const [currentMonth, setCurrentMonth] = useState(0)
+  const [currentYear] = useState(calendarYear)
+  const [rangeStart, setRangeStart] = useState(getTodayZero())
   const [rangeEnd, setRangeEnd] = useState(null)
-  const [selecting, setSelecting] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('wallCalendarTheme') || 'light')
   const [notes, setNotes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('wallCalendarNotes') || '{}') }
     catch { return {} }
   })
-  const prevMonth = useRef(currentMonth)
+  const [events, setEvents] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('wallCalendarEvents') || '{}') }
+    catch { return {} }
+  })
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState(null)
+  
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 })
-  const [direction, setDirection] = useState(0) // -1 = prev, 1 = next, 0 = none
-  const containerRef = useRef(null)
+  const [direction, setDirection] = useState(0)
+  const introComplete = useRef(targetMonth === 0)
+  const introTimerRef = useRef(null)
+  const themeSyncTimerRef = useRef(null)
+  const [introRunning, setIntroRunning] = useState(targetMonth > 0)
 
   const [transitionState, setTransitionState] = useState({
     active: false,
@@ -36,20 +63,198 @@ function App() {
     oldYear: 0
   })
 
+  // Dynamic stack: remaining months below current
+  const stackLayerCount = 11 - currentMonth
+
   // Apply theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('wallCalendarTheme', theme)
   }, [theme])
 
-  // Save notes
+  // Save notes & events
   useEffect(() => {
     localStorage.setItem('wallCalendarNotes', JSON.stringify(notes))
   }, [notes])
+  useEffect(() => {
+    localStorage.setItem('wallCalendarEvents', JSON.stringify(events))
+  }, [events])
 
-  // Keyboard shortcuts
+  const toggleTheme = useCallback(() => {
+    const root = document.documentElement
+    root.classList.add('theme-syncing')
+
+    if (themeSyncTimerRef.current) {
+      window.clearTimeout(themeSyncTimerRef.current)
+    }
+
+    setTheme(t => t === 'dark' ? 'light' : 'dark')
+
+    gsap.to('.theme-toggle', {
+      rotate: '+=180',
+      duration: 0.55,
+      ease: 'power2.inOut',
+    })
+
+    themeSyncTimerRef.current = window.setTimeout(() => {
+      root.classList.remove('theme-syncing')
+      themeSyncTimerRef.current = null
+    }, 420)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (themeSyncTimerRef.current) {
+        window.clearTimeout(themeSyncTimerRef.current)
+      }
+      document.documentElement.classList.remove('theme-syncing')
+    }
+  }, [])
+
+  // Page flip animation
+  useEffect(() => {
+    if (!transitionState.active) return
+    const el = document.querySelector('.anim-layer')
+    if (!el) return
+
+    gsap.killTweensOf(el)
+
+    const dur = introRunning ? 0.54 : 0.9
+    const completeTransition = () => setTransitionState(s => ({ ...s, active: false }))
+
+    if (transitionState.direction > 0) {
+      gsap.fromTo(el, {
+        rotationX: 0,
+        y: 0,
+        opacity: 1,
+        transformOrigin: '50% 0%',
+      }, {
+        rotationX: -92,
+        y: -10,
+        opacity: 0,
+        duration: dur,
+        ease: introRunning ? 'power2.inOut' : 'power3.inOut',
+        force3D: true,
+        onComplete: completeTransition,
+      })
+    } else {
+      gsap.fromTo(el, {
+        rotationX: -92,
+        y: -10,
+        opacity: 0,
+        transformOrigin: '50% 0%',
+      }, {
+        rotationX: 0,
+        y: 0,
+        opacity: 1,
+        duration: dur,
+        ease: introRunning ? 'power2.inOut' : 'power3.inOut',
+        force3D: true,
+        onComplete: completeTransition,
+      })
+    }
+
+    return () => {
+      gsap.killTweensOf(el)
+    }
+  }, [transitionState.active, transitionState.direction, introRunning])
+
+  // Intro flip sequence: January → current month
+  useEffect(() => {
+    if (introComplete.current || targetMonth === 0) {
+      return
+    }
+
+    const introStepDelayMs = 660
+
+    const advanceMonth = (monthIndex) => {
+      if (monthIndex >= targetMonth) {
+        introComplete.current = true
+        setIntroRunning(false)
+        return
+      }
+
+      setTransitionState({
+        active: true,
+        direction: 1,
+        oldMonth: monthIndex,
+        oldYear: calendarYear
+      })
+      setDirection(1)
+      const nextMonth = monthIndex + 1
+      setCurrentMonth(nextMonth)
+      introTimerRef.current = window.setTimeout(() => advanceMonth(nextMonth), introStepDelayMs)
+    }
+
+    introTimerRef.current = window.setTimeout(() => {
+      advanceMonth(0)
+    }, 320)
+
+    return () => {
+      if (introTimerRef.current) {
+        window.clearTimeout(introTimerRef.current)
+      }
+    }
+  }, [calendarYear, targetMonth])
+
+  // Single-year lock: no going before January
+  const goToPrev = useCallback(() => {
+    if (transitionState.active || introRunning) return
+    if (currentMonth <= 0) return
+    setTransitionState({ active: true, direction: -1, oldMonth: currentMonth, oldYear: currentYear })
+    setDirection(-1)
+    setCurrentMonth(m => m - 1)
+  }, [currentMonth, currentYear, transitionState.active, introRunning])
+
+  // Single-year lock: no going past December
+  const goToNext = useCallback(() => {
+    if (transitionState.active || introRunning) return
+    if (currentMonth >= 11) return
+    setTransitionState({ active: true, direction: 1, oldMonth: currentMonth, oldYear: currentYear })
+    setDirection(1)
+    setCurrentMonth(m => m + 1)
+  }, [currentMonth, currentYear, transitionState.active, introRunning])
+
+  const goToToday = useCallback(() => {
+    const t = new Date()
+    setDirection(0)
+    setCurrentMonth(t.getMonth())
+    setRangeStart(new Date(t.getFullYear(), t.getMonth(), t.getDate()))
+    setRangeEnd(null)
+  }, [])
+
+  const handleSingleDaySelect = useCallback((day) => {
+    if (introRunning) return
+    const clicked = new Date(currentYear, currentMonth, day)
+    setRangeStart(clicked)
+    setRangeEnd(null)
+  }, [currentMonth, currentYear, introRunning])
+
+  const handleRangeSelection = useCallback((startDay, endDay) => {
+    if (introRunning) return
+
+    const startDate = new Date(currentYear, currentMonth, startDay)
+    const endDate = new Date(currentYear, currentMonth, endDay)
+
+    if (startDate <= endDate) {
+      setRangeStart(startDate)
+      setRangeEnd(startDay === endDay ? null : endDate)
+      return
+    }
+
+    setRangeStart(endDate)
+    setRangeEnd(startDate)
+  }, [currentMonth, currentYear, introRunning])
+
+  const clearSelection = useCallback(() => {
+    setRangeStart(null)
+    setRangeEnd(null)
+  }, [])
+
+  // Keyboard shortcuts (disabled during intro)
   useEffect(() => {
     const handler = (e) => {
+      if (introRunning) return
       if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return
       if (e.key === 'ArrowLeft') { e.preventDefault(); goToPrev() }
       if (e.key === 'ArrowRight') { e.preventDefault(); goToNext() }
@@ -61,132 +266,39 @@ function App() {
     return () => window.removeEventListener('keydown', handler)
   })
 
-  // Swipe support
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    let startX = 0, startY = 0
-    const onStart = (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY }
-    const onEnd = (e) => {
-      const dx = e.changedTouches[0].clientX - startX
-      const dy = e.changedTouches[0].clientY - startY
-      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        if (dx > 0) goToPrev(); else goToNext()
-      }
+  const getNoteKey = useCallback(() => {
+    const formatShort = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+    if (rangeStart && rangeEnd) {
+      return `${formatShort(rangeStart)}_to_${formatShort(rangeEnd)}`
+    } else if (rangeStart) {
+      return formatShort(rangeStart)
     }
-    el.addEventListener('touchstart', onStart, { passive: true })
-    el.addEventListener('touchend', onEnd, { passive: true })
-    return () => { el.removeEventListener('touchstart', onStart); el.removeEventListener('touchend', onEnd) }
-  })
-
-
-
-  const toggleTheme = useCallback(() => {
-    setTheme(t => t === 'dark' ? 'light' : 'dark')
-    anime({
-      targets: '.theme-toggle',
-      rotate: '1turn',
-      duration: 500,
-      easing: 'easeInOutQuad',
-    })
-  }, [])
-
-  // Page flip animation — simple, smooth, no z-index tricks
-  useEffect(() => {
-    if (!transitionState.active) return
-    const el = document.querySelector('.anim-layer')
-    if (!el) return
-
-    anime.remove(el)
-
-    if (transitionState.direction > 0) {
-      // NEXT: Old page lifts up and away
-      anime({
-        targets: el,
-        rotateX: [0, -110],
-        opacity: [1, 0],
-        duration: 800,
-        easing: 'easeInOutQuart',
-        complete: () => setTransitionState(s => ({ ...s, active: false }))
-      })
-    } else {
-      // PREV: New page drops down into place
-      anime({
-        targets: el,
-        rotateX: [-110, 0],
-        opacity: [0, 1],
-        duration: 800,
-        easing: 'easeInOutQuart',
-        complete: () => setTransitionState(s => ({ ...s, active: false }))
-      })
-    }
-  }, [transitionState])
-
-  const goToPrev = useCallback(() => {
-    if (transitionState.active) return
-    setTransitionState({ active: true, direction: -1, oldMonth: currentMonth, oldYear: currentYear })
-    setDirection(-1)
-    setCurrentMonth(m => {
-      if (m <= 0) { setCurrentYear(y => y - 1); return 11 }
-      return m - 1
-    })
-  }, [currentMonth, currentYear, transitionState.active])
-
-  const goToNext = useCallback(() => {
-    if (transitionState.active) return
-    setTransitionState({ active: true, direction: 1, oldMonth: currentMonth, oldYear: currentYear })
-    setDirection(1)
-    setCurrentMonth(m => {
-      if (m >= 11) { setCurrentYear(y => y + 1); return 0 }
-      return m + 1
-    })
-  }, [currentMonth, currentYear, transitionState.active])
-
-  const goToToday = useCallback(() => {
-    const t = new Date()
-    setDirection(0)
-    setCurrentMonth(t.getMonth())
-    setCurrentYear(t.getFullYear())
-    setRangeStart(new Date(t.getFullYear(), t.getMonth(), t.getDate()))
-    setRangeEnd(new Date(t.getFullYear(), t.getMonth(), t.getDate()))
-    setSelecting(false)
-  }, [])
-
-  const handleDayClick = useCallback((day) => {
-    const clicked = new Date(currentYear, currentMonth, day)
-    if (!rangeStart || (rangeStart && rangeEnd)) {
-      setRangeStart(clicked)
-      setRangeEnd(null)
-      setSelecting(true)
-    } else if (selecting) {
-      let start = rangeStart, end = clicked
-      if (start > end) { const tmp = start; start = end; end = tmp }
-      setRangeStart(start)
-      setRangeEnd(end)
-      setSelecting(false)
-    }
-  }, [currentMonth, currentYear, rangeStart, rangeEnd, selecting])
-
-  const clearSelection = useCallback(() => {
-    setRangeStart(null)
-    setRangeEnd(null)
-    setSelecting(false)
-  }, [])
+    return `month_${currentYear}_${currentMonth}`
+  }, [rangeStart, rangeEnd, currentYear, currentMonth])
 
   const handleNoteChange = useCallback((text) => {
-    const formatShort = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
-    
-    let key
-    if (rangeStart && rangeEnd) {
-      key = `${formatShort(rangeStart)}_to_${formatShort(rangeEnd)}`
-    } else if (rangeStart) {
-      key = formatShort(rangeStart)
-    } else {
-      key = `month_${currentYear}_${currentMonth}`
-    }
+    const key = getNoteKey()
 
-    setNotes(prev => ({ ...prev, [key]: text }))
-  }, [rangeStart, rangeEnd, currentMonth, currentYear])
+    setNotes(prev => ({
+      ...prev,
+      [key]: {
+        ...normalizeNoteEntry(prev[key]),
+        text,
+      },
+    }))
+  }, [getNoteKey])
+
+  const handleNoteLabelsChange = useCallback((labels) => {
+    const key = getNoteKey()
+
+    setNotes(prev => ({
+      ...prev,
+      [key]: {
+        ...normalizeNoteEntry(prev[key]),
+        labels: labels.slice(0, 2),
+      },
+    }))
+  }, [getNoteKey])
 
   const showTooltip = useCallback((text, x, y) => {
     setTooltip({ visible: true, text, x, y })
@@ -195,21 +307,11 @@ function App() {
   const hideTooltip = useCallback(() => {
     setTooltip(t => ({ ...t, visible: false }))
   }, [])
-
-  // Current active note text
-  const getNoteKey = () => {
-    const formatShort = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
-    if (rangeStart && rangeEnd) {
-      return `${formatShort(rangeStart)}_to_${formatShort(rangeEnd)}`
-    } else if (rangeStart) {
-      return formatShort(rangeStart)
-    }
-    return `month_${currentYear}_${currentMonth}`
-  }
   
-  const currentNoteText = notes[getNoteKey()] || ''
+  const currentNoteEntry = normalizeNoteEntry(notes[getNoteKey()])
+  const currentNoteText = currentNoteEntry.text
+  const currentNoteLabels = currentNoteEntry.labels
 
-  // Notes title
   const formatShort = (d) => `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`
   let notesTitle = 'Notes'
   if (rangeStart && rangeEnd) {
@@ -219,10 +321,56 @@ function App() {
     notesTitle = `Notes — ${formatShort(rangeStart)}`
   }
 
+  const deleteEvent = useCallback((dateKey, eventId) => {
+    setEvents(prev => {
+      const dayEvents = prev[dateKey] || [];
+      return { ...prev, [dateKey]: dayEvents.filter(e => e.id !== eventId) };
+    });
+  }, []);
+
+  const handleHeroAddEvent = useCallback(() => {
+    if (!rangeStart) return;
+    setEditingEvent(null);
+    setIsEventModalOpen(true);
+  }, [rangeStart]);
+
+  const handleEditEvent = useCallback((evt) => {
+    setEditingEvent(evt);
+    setIsEventModalOpen(true);
+  }, []);
+
+  const handleSaveEvent = useCallback((newEvent, isUpdate) => {
+    if (!rangeStart) return;
+    const formatShort = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+    const key = formatShort(rangeStart);
+    setEvents(prev => {
+      const existing = prev[key] || [];
+      if (isUpdate) {
+        return { ...prev, [key]: existing.map(e => e.id === newEvent.id ? newEvent : e) };
+      }
+      return { ...prev, [key]: [...existing, newEvent] };
+    });
+  }, [rangeStart]);
+
   const renderPage = (m, y, keyStr, isAnimLayer) => {
+    const formatShort = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+    const activeDateKey = rangeStart ? formatShort(rangeStart) : '';
+    const userEvents = events[activeDateKey] || [];
+    
+    const holidayKey = rangeStart ? `${rangeStart.getMonth()}-${rangeStart.getDate()}` : '';
+    const holidayName = HOLIDAYS[holidayKey];
+    
+    const activeEvents = holidayName 
+      ? [{ id: `hol-${holidayKey}`, title: holidayName, time: 'Holiday', isReadOnly: true }, ...userEvents]
+      : userEvents;
+
     const pageContent = (
       <>
-        <HeroSection month={m} year={y} />
+        <HeroSection 
+          month={m} 
+          year={y} 
+          onAddEvent={handleHeroAddEvent}
+        />
 
         <div className="content-area" style={{ flex: 1, display: 'grid' }}>
           <div className="calendar-side" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -231,6 +379,8 @@ function App() {
               year={y}
               onPrev={goToPrev}
               onNext={goToNext}
+              disablePrev={m <= 0 || introRunning}
+              disableNext={m >= 11 || introRunning}
             />
             <CalendarGrid
               month={m}
@@ -238,9 +388,9 @@ function App() {
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               direction={direction}
-              onDayClick={handleDayClick}
-              onToday={goToToday}
-              onClearSelection={clearSelection}
+              events={events}
+              onSingleDaySelect={handleSingleDaySelect}
+              onRangeSelect={handleRangeSelection}
               onShowTooltip={showTooltip}
               onHideTooltip={hideTooltip}
             />
@@ -248,9 +398,14 @@ function App() {
           <NotesPanel
             title={notesTitle}
             text={currentNoteText}
+            labels={currentNoteLabels}
             onChange={handleNoteChange}
+            onLabelsChange={handleNoteLabelsChange}
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
+            events={activeEvents}
+            onDeleteEvent={(id) => deleteEvent(activeDateKey, id)}
+            onEditEvent={handleEditEvent}
           />
         </div>
       </>
@@ -282,15 +437,17 @@ function App() {
 
   return (
     <div className="app-wrapper">
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      <div className="top-controls">
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      </div>
       <div className="calendar-shadow-layer">
-        {Array.from({ length: stackLayerCount }, (_, index) => {
+        {Array.from({ length: Math.max(0, stackLayerCount) }, (_, index) => {
           const layer = index + 1
           const offset = layer * stackLayerSpacing
 
           return (
             <div
-              key={layer}
+              key={`stack-${layer}`}
               className="stack-layer"
               style={{
                 transform: `translate(${offset}px, ${offset}px)`,
@@ -303,7 +460,7 @@ function App() {
         
         <SpiralBinding />
         
-        <div className="calendar-container" ref={containerRef}>
+        <div className="calendar-container">
           {!transitionState.active ? (
             renderPage(currentMonth, currentYear, 'static-normal', false)
           ) : transitionState.direction > 0 ? (
@@ -321,7 +478,26 @@ function App() {
           )}
         </div>
       </div>
+
+      <div className="calendar-selection-hint" aria-hidden="true">
+        <span>Click for one day. Hold + drag for range.</span>
+      </div>
+
+      <div className="app-footer-credit" aria-hidden="true">
+        <span className="credit-text">© Abhash Chakraborty</span>
+        <span className="credit-heart" role="img" aria-label="heart">❤</span>
+      </div>
+
       <HolidayTooltip {...tooltip} />
+      {isEventModalOpen && (
+        <EventModal
+          key={editingEvent?.id || `${currentYear}-${currentMonth}-${rangeStart?.getDate() || 1}-new`}
+          date={rangeStart || new Date(currentYear, currentMonth, 1)}
+          onSave={handleSaveEvent}
+          onCloseComplete={() => setIsEventModalOpen(false)}
+          initialEvent={editingEvent}
+        />
+      )}
     </div>
   )
 }

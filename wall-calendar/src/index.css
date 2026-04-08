@@ -30,7 +30,7 @@
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-xl: 24px;
-  --holiday-color: #e74c3c;
+  --holiday-color: #9b7fd4;
   --saturday-color: #2e86ab;
   --sunday-color: #e74c3c;
   --today-ring: #2e86ab;
@@ -46,6 +46,8 @@
     rgba(0,0,0,0.015) 28px,
     rgba(0,0,0,0.015) 29px
   );
+  --theme-sync-duration: 0.38s;
+  --theme-sync-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 [data-theme="dark"] {
@@ -67,7 +69,7 @@
   --shadow-md: 0 8px 30px rgba(0,0,0,0.35);
   --shadow-lg: 0 20px 60px rgba(0,0,0,0.45);
   --shadow-xl: 0 25px 70px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.3);
-  --holiday-color: #ff6b6b;
+  --holiday-color: #b59af0;
   --saturday-color: #4ecdc4;
   --sunday-color: #ff6b6b;
   --today-ring: #4ecdc4;
@@ -122,4 +124,14 @@ body::before {
   height: 100%;
   display: flex;
   justify-content: center;
+}
+
+/* Force all theme color changes to stay in sync */
+html.theme-syncing *,
+html.theme-syncing *::before,
+html.theme-syncing *::after {
+  transition-property: background, background-color, color, border-color, outline-color, box-shadow, text-shadow, fill, stroke, opacity !important;
+  transition-duration: var(--theme-sync-duration) !important;
+  transition-timing-function: var(--theme-sync-ease) !important;
+  transition-delay: 0ms !important;
 }

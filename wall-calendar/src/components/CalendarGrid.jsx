@@ -1,16 +1,41 @@
-import { useEffect, useRef, useMemo } from 'react'
-import anime from 'animejs'
+import { useEffect, useRef, useMemo, useCallback } from 'react'
+import { gsap } from 'gsap'
 import { HOLIDAYS } from '../data/constants'
 
 export default function CalendarGrid({
-  month, year, rangeStart, rangeEnd, direction,
-  onDayClick, onToday, onShowTooltip, onHideTooltip
+  month, year, rangeStart, rangeEnd, direction, events,
+  onSingleDaySelect, onRangeSelect, onShowTooltip, onHideTooltip
 }) {
   const gridRef = useRef(null)
   const prevMonth = useRef(month)
+  const pressTimerRef = useRef(null)
+  const interactionRef = useRef({
+    pointerId: null,
+    anchorDay: null,
+    currentDay: null,
+    rangeActive: false,
+  })
 
   const today = new Date()
+  const todayDate = today.getDate()
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year
+
+  const clearPressTimer = useCallback(() => {
+    if (pressTimerRef.current) {
+      window.clearTimeout(pressTimerRef.current)
+      pressTimerRef.current = null
+    }
+  }, [])
+
+  const resetInteraction = useCallback(() => {
+    clearPressTimer()
+    interactionRef.current = {
+      pointerId: null,
+      anchorDay: null,
+      currentDay: null,
+      rangeActive: false,
+    }
+  }, [clearPressTimer])
 
   // Build calendar days
   const days = useMemo(() => {
@@ -31,14 +56,24 @@ export default function CalendarGrid({
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(year, month, d)
       const dow = date.getDay()
+      
       const holidayKey = `${month}-${d}`
+      const dateKeyStr = `${year}-${month + 1}-${d}`
+      const dayEvents = events && events[dateKeyStr] ? events[dateKeyStr] : []
+      let eventColors = []
+      
+      if (dayEvents.length > 0) {
+        eventColors = [...new Set(dayEvents.map(e => e.color).filter(Boolean))].slice(0, 3)
+      }
+      
       cells.push({
         day: d,
         isOther: false,
         isSaturday: dow === 6,
         isSunday: dow === 0,
-        isToday: isCurrentMonth && d === today.getDate(),
+        isToday: isCurrentMonth && d === todayDate,
         holiday: HOLIDAYS[holidayKey] || null,
+        eventColors,
         date
       })
     }
@@ -51,7 +86,7 @@ export default function CalendarGrid({
     }
 
     return cells
-  }, [month, year, isCurrentMonth])
+  }, [month, year, isCurrentMonth, events, todayDate])
 
   // Stagger animation on month change
   useEffect(() => {
@@ -60,16 +95,116 @@ export default function CalendarGrid({
 
     const dayCells = gridRef.current?.querySelectorAll('.day-cell:not(.other-month)')
     if (dayCells && dayCells.length) {
-      anime({
-        targets: dayCells,
-        scale: [0.6, 1],
-        opacity: [0, 1],
-        delay: anime.stagger(15, { grid: [7, Math.ceil(dayCells.length / 7)], from: direction >= 0 ? 'first' : 'last' }),
-        duration: 350,
-        easing: 'easeOutBack',
+      gsap.killTweensOf(dayCells)
+      gsap.fromTo(dayCells, {
+        scale: 0.9,
+        opacity: 0,
+        y: direction >= 0 ? 8 : -8,
+      }, {
+        scale: 1,
+        opacity: 1,
+        y: 0,
+        duration: 0.32,
+        ease: 'power2.out',
+        stagger: {
+          each: 0.012,
+          from: direction >= 0 ? 'start' : 'end',
+        },
+        clearProps: 'opacity,transform',
       })
     }
   }, [month, direction])
+
+  useEffect(() => {
+    const activeCells = gridRef.current?.querySelectorAll('.day-cell.range-start, .day-cell.range-end, .day-cell.in-range')
+    if (!activeCells?.length) return
+
+    gsap.killTweensOf(activeCells)
+    gsap.fromTo(activeCells, {
+      scale: 0.94,
+      y: 4,
+    }, {
+      scale: 1,
+      y: 0,
+      duration: 0.26,
+      ease: 'power2.out',
+      stagger: {
+        each: 0.014,
+        from: 'center',
+      },
+      clearProps: 'transform',
+    })
+  }, [month, rangeStart, rangeEnd])
+
+  const updateRangeFromPoint = useCallback((clientX, clientY) => {
+    const state = interactionRef.current
+    if (!state.rangeActive || state.anchorDay == null) return
+
+    const target = document.elementFromPoint(clientX, clientY)?.closest('.day-cell[data-day]')
+    if (!target || !gridRef.current?.contains(target)) return
+
+    const nextDay = Number(target.dataset.day)
+    if (!Number.isFinite(nextDay) || nextDay === state.currentDay) return
+
+    state.currentDay = nextDay
+    onRangeSelect(state.anchorDay, nextDay)
+  }, [onRangeSelect])
+
+  useEffect(() => {
+    const finishInteraction = (pointerId = null) => {
+      const state = interactionRef.current
+      if (state.pointerId == null || (pointerId != null && state.pointerId !== pointerId)) return
+
+      const anchorDay = state.anchorDay
+      const currentDay = state.currentDay ?? anchorDay
+      const useRange = state.rangeActive && anchorDay != null && currentDay != null && currentDay !== anchorDay
+
+      if (anchorDay != null) {
+        if (useRange) {
+          onRangeSelect(anchorDay, currentDay)
+        } else {
+          onSingleDaySelect(anchorDay)
+        }
+      }
+
+      resetInteraction()
+    }
+
+    const handlePointerMove = (event) => {
+      if (interactionRef.current.pointerId == null || interactionRef.current.pointerId !== event.pointerId) return
+      updateRangeFromPoint(event.clientX, event.clientY)
+    }
+
+    const handlePointerUp = (event) => {
+      finishInteraction(event.pointerId)
+    }
+
+    const handlePointerCancel = (event) => {
+      finishInteraction(event.pointerId)
+    }
+
+    const handleBlur = () => {
+      finishInteraction()
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerCancel)
+    window.addEventListener('blur', handleBlur)
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerCancel)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [onRangeSelect, onSingleDaySelect, resetInteraction, updateRangeFromPoint])
+
+  useEffect(() => {
+    return () => {
+      resetInteraction()
+    }
+  }, [resetInteraction])
 
   // Range helpers
   const getDateValue = (d) => d ? d.getTime() : null
@@ -98,6 +233,42 @@ export default function CalendarGrid({
     onShowTooltip(`🎉 ${holiday}`, rect.left + rect.width / 2, rect.top - 8)
   }
 
+  const handlePointerDown = (day) => (event) => {
+    if (event.button !== undefined && event.button !== 0) return
+
+    event.preventDefault()
+    resetInteraction()
+
+    interactionRef.current = {
+      pointerId: event.pointerId,
+      anchorDay: day,
+      currentDay: day,
+      rangeActive: false,
+    }
+
+    gsap.fromTo(event.currentTarget, {
+      scale: 0.92,
+    }, {
+      scale: 1,
+      duration: 0.24,
+      ease: 'back.out(1.8)',
+      clearProps: 'transform',
+    })
+
+    pressTimerRef.current = window.setTimeout(() => {
+      interactionRef.current.rangeActive = true
+      onRangeSelect(day, day)
+
+      gsap.fromTo(event.currentTarget, {
+        boxShadow: '0 0 0 rgba(46,134,171,0)',
+      }, {
+        boxShadow: '0 0 0 8px rgba(46,134,171,0.08)',
+        duration: 0.28,
+        ease: 'power2.out',
+      })
+    }, 190)
+  }
+
   return (
     <div className="calendar-section">
       <div className="calendar-grid" ref={gridRef}>
@@ -119,25 +290,44 @@ export default function CalendarGrid({
             cell.holiday && 'holiday',
             rangeClass
           ].filter(Boolean).join(' ')
-
+          
           return (
             <div
               key={`d-${cell.day}`}
+              data-day={cell.day}
               className={classes}
-              onClick={() => onDayClick(cell.day)}
+              onPointerDown={handlePointerDown(cell.day)}
               onMouseEnter={(e) => handleHolidayHover(e, cell.holiday)}
               onMouseLeave={onHideTooltip}
             >
-              {cell.day}
+              <div className="day-number">
+                <span className="day-number-label">{cell.day}</span>
+              </div>
+              
+              {cell.eventColors && cell.eventColors.length > 0 && (
+                <div className="event-dots-container" style={{ 
+                  display: 'flex', 
+                  gap: '3px', 
+                  position: 'absolute', 
+                  bottom: '6px',
+                  justifyContent: 'center',
+                  width: '100%' 
+                }}>
+                  {cell.eventColors.map((color, i) => (
+                    <div key={i} style={{ 
+                      width: '5px', 
+                      height: '5px', 
+                      borderRadius: '50%', 
+                      backgroundColor: color,
+                      boxShadow: '0 0 2px rgba(0,0,0,0.1)'
+                    }} />
+                  ))}
+                </div>
+              )}
             </div>
           )
         })}
       </div>
-
-      <button className="today-btn" onClick={onToday} style={{ alignSelf: 'flex-start', marginTop: '12px' }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-        Today
-      </button>
     </div>
   )
 }
