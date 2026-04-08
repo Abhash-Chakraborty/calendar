@@ -1,117 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wall Calendar 2026</title>
-  <meta name="description" content="A beautiful interactive wall calendar with date range selection, notes, and seasonal imagery." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="app-wrapper" id="appWrapper">
-    <!-- Theme Toggle -->
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark/light theme" aria-label="Toggle theme">
-      <svg class="theme-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-      <svg class="theme-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-    </button>
-
-    <div class="calendar-container" id="calendarContainer">
-      <!-- Spiral Binding -->
-      <div class="spiral-binding" id="spiralBinding"></div>
-
-      <!-- Hero Image Section -->
-      <div class="hero-section" id="heroSection">
-        <div class="hero-image-wrapper">
-          <img class="hero-image" id="heroImage" src="images/04-april.png" alt="April landscape" />
-          <div class="hero-overlay"></div>
-          <div class="hero-text">
-            <span class="hero-year" id="heroYear">2026</span>
-            <span class="hero-month" id="heroMonth">APRIL</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Section: Calendar Grid + Notes -->
-      <div class="bottom-section">
-        <!-- Navigation -->
-        <div class="month-nav">
-          <button class="nav-btn prev-btn" id="prevMonth" aria-label="Previous month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
-          <div class="nav-title">
-            <span class="nav-month-name" id="navMonthName">April</span>
-            <span class="nav-year" id="navYear">2026</span>
-          </div>
-          <button class="nav-btn next-btn" id="nextMonth" aria-label="Next month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-
-        <div class="content-area">
-          <!-- Calendar Grid -->
-          <div class="calendar-panel">
-            <!-- Selection info bar -->
-            <div class="selection-bar" id="selectionBar">
-              <span class="selection-text" id="selectionText">Click a date to start selecting a range</span>
-              <button class="clear-btn" id="clearSelection" title="Clear selection">✕</button>
-            </div>
-
-            <div class="calendar-grid" id="calendarGrid">
-              <div class="day-header">MON</div>
-              <div class="day-header">TUE</div>
-              <div class="day-header">WED</div>
-              <div class="day-header">THU</div>
-              <div class="day-header">FRI</div>
-              <div class="day-header sat">SAT</div>
-              <div class="day-header sun">SUN</div>
-            </div>
-
-            <!-- Today button -->
-            <button class="today-btn" id="todayBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Today
-            </button>
-          </div>
-
-          <!-- Notes Panel -->
-          <div class="notes-panel" id="notesPanel">
-            <div class="notes-header">
-              <h3 class="notes-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                <span id="notesTitleText">Notes</span>
-              </h3>
-              <span class="notes-count" id="notesCount">0 notes</span>
-            </div>
-            <div class="notes-list" id="notesList">
-              <!-- Notes will be rendered here -->
-            </div>
-            <div class="notes-input-area">
-              <textarea class="note-input" id="noteInput" placeholder="Write a note..." rows="3"></textarea>
-              <button class="add-note-btn" id="addNoteBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add Note
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Holiday tooltip -->
-    <div class="holiday-tooltip" id="holidayTooltip"></div>
-  </div>
-
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wall-calendar</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

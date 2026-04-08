@@ -1,0 +1,125 @@
+/* ===== CSS RESET & CUSTOM PROPERTIES ===== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #e8e2d8;
+  --bg-secondary: #faf8f5;
+  --bg-card: #ffffff;
+  --bg-input: #f5f3ef;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a5a;
+  --text-muted: #8a8a9a;
+  --accent: #2e86ab;
+  --accent-light: #d4eef8;
+  --accent-dark: #1b6d8e;
+  --accent-hover: #247091;
+  --range-bg: #e8f4f8;
+  --border: #ddd8ce;
+  --border-light: #eae6de;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 8px 30px rgba(0,0,0,0.08);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.12);
+  --shadow-xl: 0 25px 70px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --holiday-color: #e74c3c;
+  --saturday-color: #2e86ab;
+  --sunday-color: #e74c3c;
+  --today-ring: #2e86ab;
+  --note-bg: #fefefe;
+  --note-border: #e8e4dc;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --spiral-color: #b8b4ac;
+  --spiral-shadow: rgba(0,0,0,0.15);
+  --paper-texture: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 28px,
+    rgba(0,0,0,0.015) 28px,
+    rgba(0,0,0,0.015) 29px
+  );
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0d0d18;
+  --bg-secondary: #161628;
+  --bg-card: #1a1a30;
+  --bg-input: #222240;
+  --text-primary: #e8e6f0;
+  --text-secondary: #b0aec0;
+  --text-muted: #6a6880;
+  --accent: #4ecdc4;
+  --accent-light: #1a3a38;
+  --accent-dark: #3ab5ad;
+  --accent-hover: #45b8b0;
+  --range-bg: #1a2e2d;
+  --border: #2a2a42;
+  --border-light: #1e1e36;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
+  --shadow-md: 0 8px 30px rgba(0,0,0,0.35);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.45);
+  --shadow-xl: 0 25px 70px rgba(0,0,0,0.55), 0 8px 20px rgba(0,0,0,0.3);
+  --holiday-color: #ff6b6b;
+  --saturday-color: #4ecdc4;
+  --sunday-color: #ff6b6b;
+  --today-ring: #4ecdc4;
+  --note-bg: #1e1e36;
+  --note-border: #2a2a44;
+  --spiral-color: #505068;
+  --spiral-shadow: rgba(0,0,0,0.4);
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* Realistic Wall Texture Overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.15) 100%);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="dark"] body::before {
+  opacity: 0.08;
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
