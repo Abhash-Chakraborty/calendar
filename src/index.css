@@ -54,6 +54,9 @@
   );
   --theme-sync-duration: 0.38s;
   --theme-sync-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --app-visual-height: 100vh;
+  --app-viewport-offset-bottom: 0px;
+  --app-floating-ui-bottom: calc(env(safe-area-inset-bottom) + var(--app-viewport-offset-bottom));
 }
 
 [data-theme="dark"] {
@@ -102,8 +105,8 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   height: 100vh;
-  height: 100svh;
   height: 100dvh;
+  height: var(--app-visual-height);
   overflow: hidden;
   display: flex;
   justify-content: center;

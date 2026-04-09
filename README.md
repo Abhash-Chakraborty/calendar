@@ -1,10 +1,10 @@
-# Wall Calendar - Frontend Engineering Challenge
+# Calendar v0.0.1 - Frontend Engineering Challenge
 
-This project is my submission for the Frontend Engineering Challenge to build an interactive wall-calendar component inspired by a static reference design. I focused on translating the visual concept into a usable, responsive, and polished product.
+This project is my submission for the Frontend Engineering Challenge to build an interactive calendar component inspired by a static reference design. I focused on translating the visual concept into a usable, responsive, and polished product.
 
 ## What I Built
 
-- A wall-calendar style layout with a hero image area, month grid, and integrated notes/events panel.
+- A wall-calendar-inspired layout with a hero image area, month grid, and integrated notes/events panel.
 - Single-day and day-range selection with clear visual states for start, end, and in-range dates.
 - Notes tied to the active selection context (single day, range, or month).
 - Event management for selected dates (add/edit/delete) with event color markers in the calendar grid.
@@ -12,7 +12,7 @@ This project is my submission for the Frontend Engineering Challenge to build an
 
 ## How This Meets the Challenge Requirements
 
-### 1) Wall Calendar Aesthetic
+### 1) Calendar Aesthetic
 
 - I designed the UI around a physical wall-calendar feel: prominent monthly imagery, layered paper styling, spiral binding treatment, and strong visual hierarchy.
 

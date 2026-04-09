@@ -80,6 +80,42 @@ function App() {
     localStorage.setItem('wallCalendarEvents', JSON.stringify(events))
   }, [events])
 
+  useEffect(() => {
+    const root = document.documentElement
+
+    const syncVisualViewport = () => {
+      const viewport = window.visualViewport
+
+      if (!viewport) {
+        root.style.setProperty('--app-visual-height', `${window.innerHeight}px`)
+        root.style.setProperty('--app-viewport-offset-bottom', '0px')
+        return
+      }
+
+      const offsetBottom = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop
+      )
+
+      root.style.setProperty('--app-visual-height', `${viewport.height}px`)
+      root.style.setProperty('--app-viewport-offset-bottom', `${offsetBottom}px`)
+    }
+
+    syncVisualViewport()
+
+    window.addEventListener('resize', syncVisualViewport)
+    window.visualViewport?.addEventListener('resize', syncVisualViewport)
+    window.visualViewport?.addEventListener('scroll', syncVisualViewport)
+
+    return () => {
+      window.removeEventListener('resize', syncVisualViewport)
+      window.visualViewport?.removeEventListener('resize', syncVisualViewport)
+      window.visualViewport?.removeEventListener('scroll', syncVisualViewport)
+      root.style.removeProperty('--app-visual-height')
+      root.style.removeProperty('--app-viewport-offset-bottom')
+    }
+  }, [])
+
   const toggleTheme = useCallback(() => {
     const root = document.documentElement
     root.classList.add('theme-syncing')
@@ -438,8 +474,8 @@ function App() {
   return (
     <div className="app-wrapper">
       <div className="top-controls">
-        <a href="https://abhashchakraborty.tech/" target="_blank" rel="noopener noreferrer" className="logo-badge" aria-label="Wall Calendar logo">
-          <img src="/Logo.svg" alt="Wall Calendar logo" />
+        <a href="https://abhashchakraborty.tech/" target="_blank" rel="noopener noreferrer" className="logo-badge" aria-label="Calendar logo">
+          <img src="/Logo.svg" alt="Calendar logo" />
         </a>
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </div>
