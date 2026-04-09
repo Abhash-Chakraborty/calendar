@@ -68,6 +68,18 @@ npm run build
 npm run preview
 ```
 
+## Image Performance and CDN
+
+- The app now supports CDN-backed assets using `VITE_IMAGE_CDN_URL`.
+- If this env var is not set, images continue to load from local `/public` paths.
+- Example:
+
+```bash
+VITE_IMAGE_CDN_URL=https://cdn.example.com npm run build
+```
+
+- On Vercel deployments, `vercel.json` sets long edge cache headers for `/images/*` and `/Logo.svg`.
+
 ## Project Structure
 
 - `src/App.jsx` - app state, page composition, and transitions

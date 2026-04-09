@@ -3,20 +3,39 @@ export const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
-export const MONTH_IMAGES = {
-  0: '/images/01-january.jpg',
-  1: '/images/02-february.jpg',
-  2: '/images/03-march.jpg',
-  3: '/images/04-april.jpg',
-  4: '/images/05-may.jpg',
-  5: '/images/06-june.jpg',
-  6: '/images/07-july.jpg',
-  7: '/images/08-august.jpg',
-  8: '/images/09-september.jpg',
-  9: '/images/10-october.jpg',
-  10: '/images/11-november.jpg',
-  11: '/images/12-december.jpg',
+const IMAGE_CDN_BASE_URL = (import.meta.env.VITE_IMAGE_CDN_URL || '').trim().replace(/\/+$/, '')
+
+const resolveAssetUrl = (path) => {
+  if (!IMAGE_CDN_BASE_URL) {
+    return path
+  }
+
+  return `${IMAGE_CDN_BASE_URL}${path}`
 }
+
+const MONTH_IMAGE_PATHS = [
+  '/images/01-january.jpg',
+  '/images/02-february.jpg',
+  '/images/03-march.jpg',
+  '/images/04-april.jpg',
+  '/images/05-may.jpg',
+  '/images/06-june.jpg',
+  '/images/07-july.jpg',
+  '/images/08-august.jpg',
+  '/images/09-september.jpg',
+  '/images/10-october.jpg',
+  '/images/11-november.jpg',
+  '/images/12-december.jpg',
+]
+
+export const MONTH_IMAGES = MONTH_IMAGE_PATHS.reduce((accumulator, imagePath, monthIndex) => {
+  accumulator[monthIndex] = resolveAssetUrl(imagePath)
+  return accumulator
+}, {})
+
+export const MONTH_IMAGE_LIST = MONTH_IMAGE_PATHS.map(resolveAssetUrl)
+
+export const LOGO_IMAGE = resolveAssetUrl('/Logo.svg')
 
 // Month accent color palettes (primary, light, dark) for dynamic theming
 export const MONTH_COLORS = {

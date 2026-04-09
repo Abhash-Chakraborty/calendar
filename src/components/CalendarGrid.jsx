@@ -4,6 +4,7 @@ import { HOLIDAYS } from '../data/constants'
 
 export default function CalendarGrid({
   month, year, rangeStart, rangeEnd, direction, events,
+  enableMonthCellAnimation = true,
   onSingleDaySelect, onRangeSelect, onShowTooltip, onHideTooltip
 }) {
   const gridRef = useRef(null)
@@ -93,6 +94,10 @@ export default function CalendarGrid({
     if (prevMonth.current === month) return
     prevMonth.current = month
 
+    if (!enableMonthCellAnimation) {
+      return
+    }
+
     const dayCells = gridRef.current?.querySelectorAll('.day-cell:not(.other-month)')
     if (dayCells && dayCells.length) {
       gsap.killTweensOf(dayCells)
@@ -116,7 +121,7 @@ export default function CalendarGrid({
         clearProps: 'opacity,transform,willChange',
       })
     }
-  }, [month, direction])
+  }, [month, direction, enableMonthCellAnimation])
 
   useEffect(() => {
     const activeCells = gridRef.current?.querySelectorAll('.day-cell.range-start, .day-cell.range-end, .day-cell.in-range')

@@ -8,8 +8,14 @@ import NotesPanel from './components/NotesPanel'
 import ThemeToggle from './components/ThemeToggle'
 import HolidayTooltip from './components/HolidayTooltip'
 import EventModal from './components/EventModal'
-import { MONTH_NAMES, HOLIDAYS } from './data/constants'
+import { MONTH_NAMES, HOLIDAYS, MONTH_IMAGES, MONTH_IMAGE_LIST, LOGO_IMAGE } from './data/constants'
+import { preloadImages, preloadImagesInIdle, primeImageConnections } from './utils/imagePreload'
 import './App.css'
+
+function getMonthLoopIndex(monthIndex) {
+  const normalizedMonth = monthIndex % 12
+  return normalizedMonth >= 0 ? normalizedMonth : normalizedMonth + 12
+}
 
 function normalizeNoteEntry(entry) {
   if (typeof entry === 'string') {
@@ -53,8 +59,10 @@ function App() {
   const [direction, setDirection] = useState(0)
   const introComplete = useRef(targetMonth === 0)
   const introTimerRef = useRef(null)
+  const introReadyTimerRef = useRef(null)
   const themeSyncTimerRef = useRef(null)
   const [introRunning, setIntroRunning] = useState(targetMonth > 0)
+  const [introAssetsReady, setIntroAssetsReady] = useState(targetMonth === 0)
 
   const [transitionState, setTransitionState] = useState({
     active: false,
@@ -79,6 +87,64 @@ function App() {
   useEffect(() => {
     localStorage.setItem('wallCalendarEvents', JSON.stringify(events))
   }, [events])
+
+  useEffect(() => {
+    gsap.config({ autoSleep: 60, nullTargetWarn: false, force3D: true })
+    gsap.defaults({ overwrite: 'auto' })
+    gsap.ticker.lagSmoothing(700, 33)
+  }, [])
+
+  useEffect(() => {
+    const criticalImages = [
+      MONTH_IMAGES[0],
+      MONTH_IMAGES[getMonthLoopIndex(targetMonth)],
+      MONTH_IMAGES[getMonthLoopIndex(targetMonth + 1)],
+      LOGO_IMAGE,
+    ]
+
+    primeImageConnections([...MONTH_IMAGE_LIST, LOGO_IMAGE])
+
+    let cancelled = false
+
+    const markReady = () => {
+      if (cancelled) {
+        return
+      }
+
+      setIntroAssetsReady(true)
+
+      if (introReadyTimerRef.current) {
+        window.clearTimeout(introReadyTimerRef.current)
+        introReadyTimerRef.current = null
+      }
+    }
+
+    introReadyTimerRef.current = window.setTimeout(markReady, 1800)
+
+    preloadImages(criticalImages, { priority: 'high' }).finally(markReady)
+    const cancelIdlePreload = preloadImagesInIdle(MONTH_IMAGE_LIST, { priority: 'low' })
+
+    return () => {
+      cancelled = true
+
+      if (introReadyTimerRef.current) {
+        window.clearTimeout(introReadyTimerRef.current)
+        introReadyTimerRef.current = null
+      }
+
+      cancelIdlePreload()
+    }
+  }, [targetMonth])
+
+  useEffect(() => {
+    preloadImages([
+      MONTH_IMAGES[getMonthLoopIndex(currentMonth + 1)],
+      MONTH_IMAGES[getMonthLoopIndex(currentMonth - 1)],
+    ], {
+      priority: 'low',
+      addPreloadLink: false,
+    })
+  }, [currentMonth])
 
   useEffect(() => {
     const root = document.documentElement
@@ -160,11 +226,15 @@ function App() {
     if (!el) return
 
     gsap.killTweensOf(el)
-    gsap.set(el, { willChange: 'transform, opacity' })
+    gsap.set(el, {
+      willChange: 'transform, opacity',
+      transformPerspective: 1200,
+      backfaceVisibility: 'hidden',
+    })
 
     const dur = introRunning ? 0.54 : 0.9
     const completeTransition = () => {
-      gsap.set(el, { clearProps: 'willChange' })
+      gsap.set(el, { clearProps: 'willChange,transformPerspective,backfaceVisibility' })
       setTransitionState(s => ({ ...s, active: false }))
     }
 
@@ -204,13 +274,13 @@ function App() {
 
     return () => {
       gsap.killTweensOf(el)
-      gsap.set(el, { clearProps: 'willChange' })
+      gsap.set(el, { clearProps: 'willChange,transformPerspective,backfaceVisibility' })
     }
   }, [transitionState.active, transitionState.direction, introRunning])
 
   // Intro flip sequence: January → current month
   useEffect(() => {
-    if (introComplete.current || targetMonth === 0) {
+    if (introComplete.current || targetMonth === 0 || !introAssetsReady) {
       return
     }
 
@@ -244,7 +314,7 @@ function App() {
         window.clearTimeout(introTimerRef.current)
       }
     }
-  }, [calendarYear, targetMonth])
+  }, [calendarYear, targetMonth, introAssetsReady])
 
   // Single-year lock: no going before January
   const goToPrev = useCallback(() => {
@@ -419,6 +489,7 @@ function App() {
           month={m} 
           year={y} 
           onAddEvent={handleHeroAddEvent}
+          isPriority={!isAnimLayer}
         />
 
         <div className="content-area" style={{ flex: 1, display: 'grid' }}>
@@ -437,6 +508,7 @@ function App() {
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               direction={direction}
+              enableMonthCellAnimation={!introRunning}
               events={events}
               onSingleDaySelect={handleSingleDaySelect}
               onRangeSelect={handleRangeSelection}
@@ -489,7 +561,7 @@ function App() {
     <div className="app-wrapper">
       <div className="top-controls">
         <a href="https://abhashchakraborty.tech/" target="_blank" rel="noopener noreferrer" className="logo-badge" aria-label="Calendar logo">
-          <img src="/Logo.svg" alt="Calendar logo" />
+          <img src={LOGO_IMAGE} alt="Calendar logo" loading="eager" decoding="async" fetchPriority="high" />
         </a>
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </div>

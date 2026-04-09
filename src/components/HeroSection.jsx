@@ -1,13 +1,19 @@
 import { MONTH_NAMES, MONTH_IMAGES } from '../data/constants'
 
-export default function HeroSection({ month, year, onAddEvent }) {
+export default function HeroSection({ month, year, onAddEvent, isPriority = true }) {
+  const heroImageSrc = MONTH_IMAGES[month]
+
   return (
     <div className="hero-section">
       <div className="hero-image-wrapper">
         <img
           className="hero-image"
-          src={MONTH_IMAGES[month]}
+          src={heroImageSrc}
           alt={`${MONTH_NAMES[month]} landscape`}
+          loading="eager"
+          decoding="async"
+          fetchPriority={isPriority ? 'high' : 'auto'}
+          draggable={false}
           style={{ position: 'relative', zIndex: 2 }}
         />
         <div className="hero-overlay" style={{ zIndex: 4 }} />
