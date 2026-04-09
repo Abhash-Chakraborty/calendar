@@ -14,49 +14,70 @@ export default function EventModal({ date, onSave, onCloseComplete, initialEvent
   useLayoutEffect(() => {
     const overlay = overlayRef.current
     const modal = modalRef.current
+    if (!overlay || !modal) return
 
     gsap.set(overlay, { opacity: 0 })
-    gsap.set(modal, { opacity: 0, y: 24, scale: 0.94 })
+    gsap.set(modal, { opacity: 0, y: 24, scale: 0.94, willChange: 'transform, opacity' })
 
     gsap.timeline()
       .to(overlay, {
         opacity: 1,
         duration: 0.18,
         ease: 'power2.out',
+        overwrite: 'auto',
       })
       .to(modal, {
         opacity: 1,
         y: 0,
         scale: 1,
-        duration: 0.34,
+        duration: 0.3,
         ease: 'back.out(1.4)',
+        overwrite: 'auto',
+        force3D: true,
+        onComplete: () => {
+          gsap.set(modal, { clearProps: 'willChange' })
+        },
       }, 0)
 
     return () => {
       gsap.killTweensOf([overlay, modal])
+      gsap.set(modal, { clearProps: 'willChange' })
     }
   }, [])
 
   const requestClose = () => {
     if (closingRef.current) return
     closingRef.current = true
+    const overlay = overlayRef.current
+    const modal = modalRef.current
+    if (!overlay || !modal) {
+      onCloseComplete?.()
+      return
+    }
+
+    gsap.killTweensOf([overlay, modal])
+    gsap.set(modal, { willChange: 'transform, opacity' })
 
     gsap.timeline({
       onComplete: () => {
+        gsap.set(modal, { clearProps: 'willChange' })
         onCloseComplete?.()
       },
     })
-      .to(modalRef.current, {
+      .to(modal, {
         opacity: 0,
         y: 16,
         scale: 0.97,
         duration: 0.18,
         ease: 'power2.in',
+        overwrite: 'auto',
+        force3D: true,
       })
-      .to(overlayRef.current, {
+      .to(overlay, {
         opacity: 0,
-        duration: 0.16,
+        duration: 0.14,
         ease: 'power2.in',
+        overwrite: 'auto',
       }, 0.02)
   }
 

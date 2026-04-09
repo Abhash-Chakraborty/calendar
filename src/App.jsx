@@ -126,11 +126,17 @@ function App() {
 
     setTheme(t => t === 'dark' ? 'light' : 'dark')
 
-    gsap.to('.theme-toggle', {
-      rotate: '+=180',
-      duration: 0.55,
-      ease: 'power2.inOut',
-    })
+    const toggleButton = document.querySelector('.theme-toggle')
+    if (toggleButton) {
+      gsap.killTweensOf(toggleButton)
+      gsap.to(toggleButton, {
+        rotate: '+=180',
+        duration: 0.55,
+        ease: 'power2.inOut',
+        overwrite: 'auto',
+        force3D: true,
+      })
+    }
 
     themeSyncTimerRef.current = window.setTimeout(() => {
       root.classList.remove('theme-syncing')
@@ -154,9 +160,13 @@ function App() {
     if (!el) return
 
     gsap.killTweensOf(el)
+    gsap.set(el, { willChange: 'transform, opacity' })
 
     const dur = introRunning ? 0.54 : 0.9
-    const completeTransition = () => setTransitionState(s => ({ ...s, active: false }))
+    const completeTransition = () => {
+      gsap.set(el, { clearProps: 'willChange' })
+      setTransitionState(s => ({ ...s, active: false }))
+    }
 
     if (transitionState.direction > 0) {
       gsap.fromTo(el, {
@@ -171,6 +181,7 @@ function App() {
         duration: dur,
         ease: introRunning ? 'power2.inOut' : 'power3.inOut',
         force3D: true,
+        overwrite: 'auto',
         onComplete: completeTransition,
       })
     } else {
@@ -186,12 +197,14 @@ function App() {
         duration: dur,
         ease: introRunning ? 'power2.inOut' : 'power3.inOut',
         force3D: true,
+        overwrite: 'auto',
         onComplete: completeTransition,
       })
     }
 
     return () => {
       gsap.killTweensOf(el)
+      gsap.set(el, { clearProps: 'willChange' })
     }
   }, [transitionState.active, transitionState.direction, introRunning])
 
@@ -300,7 +313,7 @@ function App() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  })
+  }, [introRunning, goToPrev, goToNext, clearSelection, goToToday, toggleTheme])
 
   const getNoteKey = useCallback(() => {
     const formatShort = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
@@ -349,12 +362,12 @@ function App() {
   const currentNoteLabels = currentNoteEntry.labels
 
   const formatShort = (d) => `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`
-  let notesTitle = 'Notes'
+  let notesSubtitle = ''
   if (rangeStart && rangeEnd) {
     const s = formatShort(rangeStart), e = formatShort(rangeEnd)
-    notesTitle = s === e ? `Notes — ${s}` : `Notes — ${s} to ${e}`
+    notesSubtitle = s === e ? s : `${s} to ${e}`
   } else if (rangeStart) {
-    notesTitle = `Notes — ${formatShort(rangeStart)}`
+    notesSubtitle = formatShort(rangeStart)
   }
 
   const deleteEvent = useCallback((dateKey, eventId) => {
@@ -432,7 +445,8 @@ function App() {
             />
           </div>
           <NotesPanel
-            title={notesTitle}
+            title="Notes"
+            subtitle={notesSubtitle}
             text={currentNoteText}
             labels={currentNoteLabels}
             onChange={handleNoteChange}

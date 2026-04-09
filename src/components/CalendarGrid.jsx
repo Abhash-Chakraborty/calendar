@@ -96,6 +96,7 @@ export default function CalendarGrid({
     const dayCells = gridRef.current?.querySelectorAll('.day-cell:not(.other-month)')
     if (dayCells && dayCells.length) {
       gsap.killTweensOf(dayCells)
+      gsap.set(dayCells, { willChange: 'transform, opacity' })
       gsap.fromTo(dayCells, {
         scale: 0.9,
         opacity: 0,
@@ -110,7 +111,9 @@ export default function CalendarGrid({
           each: 0.012,
           from: direction >= 0 ? 'start' : 'end',
         },
-        clearProps: 'opacity,transform',
+        overwrite: 'auto',
+        force3D: true,
+        clearProps: 'opacity,transform,willChange',
       })
     }
   }, [month, direction])
@@ -120,6 +123,7 @@ export default function CalendarGrid({
     if (!activeCells?.length) return
 
     gsap.killTweensOf(activeCells)
+    gsap.set(activeCells, { willChange: 'transform' })
     gsap.fromTo(activeCells, {
       scale: 0.94,
       y: 4,
@@ -132,7 +136,9 @@ export default function CalendarGrid({
         each: 0.014,
         from: 'center',
       },
-      clearProps: 'transform',
+      overwrite: 'auto',
+      force3D: true,
+      clearProps: 'transform,willChange',
     })
   }, [month, rangeStart, rangeEnd])
 
@@ -252,6 +258,8 @@ export default function CalendarGrid({
       scale: 1,
       duration: 0.24,
       ease: 'back.out(1.8)',
+      overwrite: 'auto',
+      force3D: true,
       clearProps: 'transform',
     })
 
@@ -259,12 +267,14 @@ export default function CalendarGrid({
       interactionRef.current.rangeActive = true
       onRangeSelect(day, day)
 
+      gsap.killTweensOf(event.currentTarget)
       gsap.fromTo(event.currentTarget, {
         boxShadow: '0 0 0 rgba(46,134,171,0)',
       }, {
         boxShadow: '0 0 0 8px rgba(46,134,171,0.08)',
         duration: 0.28,
         ease: 'power2.out',
+        overwrite: 'auto',
       })
     }, 190)
   }

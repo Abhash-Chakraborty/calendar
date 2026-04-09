@@ -10,25 +10,30 @@ export default function MonthNav({ monthName, year, onPrev, onNext, disablePrev,
     if (disabled) return
 
     const button = direction < 0 ? prevRef.current : nextRef.current
+    const title = titleRef.current
+    if (!button || !title) {
+      cb()
+      return
+    }
+
     const titleShift = direction < 0 ? 6 : -6
     const buttonKick = direction < 0 ? -1.5 : 1.5
 
-    gsap.killTweensOf([titleRef.current, button])
+    gsap.killTweensOf([title, button])
 
     gsap.timeline()
-      .fromTo(titleRef.current, {
+      .fromTo(title, {
         opacity: 1,
         y: 0,
-        filter: 'blur(0px)',
       }, {
         opacity: 0.72,
         y: titleShift,
-        filter: 'blur(2px)',
-        duration: 0.14,
+        duration: 0.13,
         ease: 'power2.out',
         yoyo: true,
         repeat: 1,
-        clearProps: 'y,filter',
+        overwrite: 'auto',
+        clearProps: 'y',
       }, 0)
       .fromTo(button, {
         scale: 1,
@@ -36,10 +41,13 @@ export default function MonthNav({ monthName, year, onPrev, onNext, disablePrev,
       }, {
         scale: 1.04,
         y: buttonKick,
-        duration: 0.12,
+        duration: 0.11,
         ease: 'power2.out',
         yoyo: true,
         repeat: 1,
+        overwrite: 'auto',
+        force3D: true,
+        clearProps: 'transform',
       }, 0)
 
     cb()

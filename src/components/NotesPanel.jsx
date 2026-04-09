@@ -5,6 +5,7 @@ const LABEL_COLORS = ['#e76f92', '#f2a65a', '#6bbf59', '#30b4c5', '#7f88ff', '#9
 
 export default function NotesPanel({
   title,
+  subtitle = '',
   text,
   labels = [],
   onChange,
@@ -25,8 +26,36 @@ export default function NotesPanel({
   const [draftLabelName, setDraftLabelName] = useState('')
   const [draftLabelColor, setDraftLabelColor] = useState(LABEL_COLORS[0])
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  const [isMobileView, setIsMobileView] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches
+  ))
   const canAddLabel = draftLabelName.trim().length > 0 && labels.length < 2
   const previousCanAddRef = useRef(canAddLabel)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 720px)')
+    const syncMobileView = () => {
+      setIsMobileView(mediaQuery.matches)
+    }
+
+    syncMobileView()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMobileView)
+      return () => {
+        mediaQuery.removeEventListener('change', syncMobileView)
+      }
+    }
+
+    mediaQuery.addListener(syncMobileView)
+    return () => {
+      mediaQuery.removeListener(syncMobileView)
+    }
+  }, [])
 
   const sortedEvents = [...events].sort((a, b) => {
     if (!a.time && !b.time) return 0
@@ -64,6 +93,7 @@ export default function NotesPanel({
     }
 
     if (countChanged) {
+      gsap.set(notesTitle, { willChange: 'transform' })
       gsap.fromTo(notesTitle, {
         y: sortedEvents.length > previousCountRef.current ? -8 : 8,
         scale: 0.985,
@@ -72,36 +102,49 @@ export default function NotesPanel({
         scale: 1,
         duration: 0.56,
         ease: 'elastic.out(1, 0.7)',
-        clearProps: 'transform',
+        overwrite: 'auto',
+        force3D: true,
+        clearProps: 'transform,willChange',
       })
     }
 
     if (hasEvents && !wasVisibleRef.current) {
+      const nextHeight = inner.scrollHeight
       gsap.set(shell, { height: 0, pointerEvents: 'auto' })
-      gsap.set(inner, { y: -18, opacity: 0 })
+      gsap.set(shell, { willChange: 'height' })
+      gsap.set(inner, { y: -18, opacity: 0, willChange: 'transform, opacity' })
 
       gsap.timeline({
         onComplete: () => {
           shell.style.height = 'auto'
+          gsap.set(shell, { clearProps: 'willChange' })
+          gsap.set(inner, { clearProps: 'willChange' })
         },
       })
         .to(shell, {
-          height: inner.scrollHeight,
+          height: nextHeight,
           duration: 0.42,
           ease: 'power2.out',
+          overwrite: 'auto',
         })
         .to(inner, {
           y: 0,
           opacity: 1,
           duration: 0.34,
           ease: 'power2.out',
+          overwrite: 'auto',
+          force3D: true,
         }, 0.06)
     } else if (!hasEvents && wasVisibleRef.current) {
       gsap.set(shell, { height: shell.offsetHeight })
+      gsap.set(shell, { willChange: 'height' })
+      gsap.set(inner, { willChange: 'transform, opacity' })
 
       gsap.timeline({
         onComplete: () => {
           gsap.set(shell, { height: 0, pointerEvents: 'none' })
+          gsap.set(shell, { clearProps: 'willChange' })
+          gsap.set(inner, { clearProps: 'willChange' })
         },
       })
         .to(inner, {
@@ -109,19 +152,26 @@ export default function NotesPanel({
           opacity: 0,
           duration: 0.24,
           ease: 'power2.in',
+          overwrite: 'auto',
+          force3D: true,
         })
         .to(shell, {
           height: 0,
           duration: 0.34,
           ease: 'power2.inOut',
+          overwrite: 'auto',
         }, 0)
     } else if (hasEvents) {
+      const nextHeight = inner.scrollHeight
+      gsap.set(shell, { willChange: 'height' })
       gsap.to(shell, {
-        height: inner.scrollHeight,
+        height: nextHeight,
         duration: 0.22,
         ease: 'power2.out',
+        overwrite: 'auto',
         onComplete: () => {
           shell.style.height = 'auto'
+          gsap.set(shell, { clearProps: 'willChange' })
         },
       })
       gsap.set(inner, { y: 0, opacity: 1 })
@@ -146,8 +196,15 @@ export default function NotesPanel({
 
     if (isPaletteOpen) {
       gsap.set(palette, { display: 'flex', pointerEvents: 'auto' })
+      gsap.set(palette, { willChange: 'transform, opacity' })
+      gsap.set(swatches, { willChange: 'transform, opacity' })
 
-      gsap.timeline()
+      const openTimeline = gsap.timeline({
+        onComplete: () => {
+          gsap.set(palette, { clearProps: 'willChange' })
+          gsap.set(swatches, { clearProps: 'willChange' })
+        },
+      })
         .fromTo(palette, {
           autoAlpha: 0,
           y: 8,
@@ -158,6 +215,8 @@ export default function NotesPanel({
           scale: 1,
           duration: 0.2,
           ease: 'power2.out',
+          overwrite: 'auto',
+          force3D: true,
         })
         .fromTo(swatches, {
           autoAlpha: 0,
@@ -168,9 +227,12 @@ export default function NotesPanel({
           duration: 0.18,
           stagger: 0.02,
           ease: 'power2.out',
+          overwrite: 'auto',
+          force3D: true,
         }, 0.03)
 
       return () => {
+        openTimeline.kill()
         gsap.killTweensOf([palette, swatches])
       }
     }
@@ -181,8 +243,12 @@ export default function NotesPanel({
       scale: 0.92,
       duration: 0.14,
       ease: 'power2.in',
+      overwrite: 'auto',
+      force3D: true,
       onComplete: () => {
         gsap.set(palette, { display: 'none', pointerEvents: 'none' })
+        gsap.set(palette, { clearProps: 'willChange' })
+        gsap.set(swatches, { clearProps: 'willChange' })
       },
     })
 
@@ -221,6 +287,7 @@ export default function NotesPanel({
 
     if (canAddLabel && !previousCanAddRef.current) {
       gsap.killTweensOf(button)
+      gsap.set(button, { willChange: 'transform, box-shadow' })
       gsap.fromTo(button, {
         scale: 0.88,
         boxShadow: '0 0 0 rgba(46, 134, 171, 0)',
@@ -229,6 +296,9 @@ export default function NotesPanel({
         boxShadow: '0 8px 18px rgba(46, 134, 171, 0.3)',
         duration: 0.24,
         ease: 'back.out(2.3)',
+        overwrite: 'auto',
+        force3D: true,
+        clearProps: 'willChange',
       })
     }
 
@@ -251,6 +321,65 @@ export default function NotesPanel({
   const removeLabel = (indexToRemove) => {
     onLabelsChange?.(labels.filter((_, index) => index !== indexToRemove))
   }
+
+  const renderLabelControls = (className) => (
+    <div className={`notes-labels-controls ${className}`.trim()}>
+      <div className="notes-label-input-wrap" ref={paletteWrapRef}>
+        <input
+          className="notes-label-input"
+          type="text"
+          value={draftLabelName}
+          maxLength={10}
+          onChange={(e) => setDraftLabelName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              addLabel()
+            }
+          }}
+          placeholder="Add label"
+        />
+
+        <button
+          type="button"
+          className={`notes-label-color-trigger ${isPaletteOpen ? 'open' : ''}`}
+          onClick={() => setIsPaletteOpen((open) => !open)}
+          title="Choose label color"
+        >
+          <span className="notes-label-color-preview" style={{ backgroundColor: draftLabelColor }} />
+        </button>
+
+        <div className="notes-label-palette-list" ref={paletteListRef}>
+          {LABEL_COLORS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              className={`notes-label-swatch ${draftLabelColor === color ? 'active' : ''}`}
+              style={{ backgroundColor: color }}
+              onClick={() => {
+                setDraftLabelColor(color)
+                setIsPaletteOpen(false)
+              }}
+              title={`Use ${color} label color`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <button
+        className={`notes-label-add-btn ${canAddLabel ? 'is-ready' : ''}`}
+        type="button"
+        ref={addBtnRef}
+        onClick={addLabel}
+        disabled={!canAddLabel}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+    </div>
+  )
 
   return (
     <div className="notes-panel">
@@ -318,13 +447,18 @@ export default function NotesPanel({
 
       <section className="notes-editor-section">
         <div className="notes-panel-header notes-section-header">
-          <h3 className="notes-title" ref={notesTitleRef}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-            <span>{title}</span>
-          </h3>
+          <div className="notes-editor-header-row">
+            <h3 className="notes-title" ref={notesTitleRef}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              <span className="notes-title-main">{title}</span>
+              {subtitle && <span className="notes-title-subtitle">{subtitle}</span>}
+            </h3>
+
+            {labels.length < 2 && isMobileView && renderLabelControls('notes-header-label-controls')}
+          </div>
         </div>
 
         <div className="notes-editor-body">
@@ -360,64 +494,7 @@ export default function NotesPanel({
               ))}
             </div>
 
-            {labels.length < 2 && (
-              <div className="notes-labels-controls">
-                <div className="notes-label-input-wrap" ref={paletteWrapRef}>
-                  <input
-                    className="notes-label-input"
-                    type="text"
-                    value={draftLabelName}
-                    maxLength={10}
-                    onChange={(e) => setDraftLabelName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        addLabel()
-                      }
-                    }}
-                    placeholder="Add label"
-                  />
-
-                  <button
-                    type="button"
-                    className={`notes-label-color-trigger ${isPaletteOpen ? 'open' : ''}`}
-                    onClick={() => setIsPaletteOpen((open) => !open)}
-                    title="Choose label color"
-                  >
-                    <span className="notes-label-color-preview" style={{ backgroundColor: draftLabelColor }} />
-                  </button>
-
-                  <div className="notes-label-palette-list" ref={paletteListRef}>
-                    {LABEL_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`notes-label-swatch ${draftLabelColor === color ? 'active' : ''}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => {
-                          setDraftLabelColor(color)
-                          setIsPaletteOpen(false)
-                        }}
-                        title={`Use ${color} label color`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  className={`notes-label-add-btn ${canAddLabel ? 'is-ready' : ''}`}
-                  type="button"
-                  ref={addBtnRef}
-                  onClick={addLabel}
-                  disabled={!canAddLabel}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
-              </div>
-            )}
+            {labels.length < 2 && !isMobileView && renderLabelControls('notes-inline-label-controls')}
           </div>
         </div>
       </section>

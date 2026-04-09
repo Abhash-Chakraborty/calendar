@@ -156,6 +156,7 @@
   overflow: hidden;
   border-radius: inherit;
   transition: background var(--transition);
+  min-height: 0;
 }
 
 .hero-section {
@@ -171,6 +172,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .static-layer {
@@ -487,6 +489,8 @@
   grid-template-columns: 1fr var(--notes-panel-width);
   position: relative;
   z-index: 2;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ===== CALENDAR SECTION ===== */
@@ -711,11 +715,36 @@
   letter-spacing: 0.5px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   color: var(--text-primary);
 }
 
 .notes-title svg { color: var(--accent); }
+
+.notes-title-main {
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.notes-title-subtitle {
+  flex-basis: 100%;
+  margin-left: 26px;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.notes-editor-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
 
 /* Custom Scrollbar Utility */
 .custom-scrollbar::-webkit-scrollbar {
@@ -899,6 +928,10 @@
   grid-template-columns: minmax(0, 1fr) 36px;
   gap: 10px;
   align-items: center;
+}
+
+.notes-header-label-controls {
+  display: none;
 }
 
 .notes-label-input-wrap {
@@ -1264,6 +1297,23 @@
   .logo-badge img { width: 20px; height: 20px; }
 
   .calendar-container { border-radius: var(--radius-lg); }
+  .calendar-shadow-layer {
+    --mobile-calendar-top-gap: 0px;
+    --mobile-calendar-bottom-gap: 1px;
+    margin-top: var(--mobile-calendar-top-gap);
+    margin-bottom: var(--mobile-calendar-bottom-gap);
+    flex: 1 1 auto;
+    min-height: 0;
+    height: calc(100% - var(--mobile-calendar-top-gap) - var(--mobile-calendar-bottom-gap));
+    max-height: calc(100% - var(--mobile-calendar-top-gap) - var(--mobile-calendar-bottom-gap));
+  }
+
+  @supports (-moz-appearance: none) {
+    .calendar-shadow-layer {
+      --mobile-calendar-top-gap: 50px;
+      --mobile-calendar-bottom-gap: 22px;
+    }
+  }
 
   .hero-image-wrapper { height: 207px; }
   .hero-text { bottom: 20px; right: 20px; }
@@ -1275,22 +1325,35 @@
 
   .content-area {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+    min-height: 0;
+    flex: 1;
   }
   .calendar-panel { padding: 12px 14px 14px; }
 
   .calendar-section {
-    padding: 8px 24px;
+    padding: 4px 18px 6px;
+    min-height: 0;
+  }
+
+  .calendar-side {
+    min-height: 0;
+    align-self: start;
   }
 
   .calendar-grid {
-    gap: 3px;
+    flex: 0 0 auto;
+    gap: 2px;
+    grid-template-rows: auto repeat(6, minmax(25px, auto));
+    align-content: start;
+    min-height: 0;
   }
 
   .weekday-header {
-    font-size: 0.66rem;
+    font-size: 0.62rem;
     letter-spacing: 0.08em;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
   }
 
   .month-nav {
@@ -1305,7 +1368,7 @@
 
   .nav-btn {
     position: fixed;
-    bottom: calc(8px + var(--app-floating-ui-bottom, env(safe-area-inset-bottom)));
+    bottom: max(18px, calc(12px + var(--app-floating-ui-bottom, env(safe-area-inset-bottom))));
     width: 40px;
     height: 40px;
     z-index: 1300;
@@ -1336,9 +1399,21 @@
   .notes-panel {
     border-left: none;
     border-top: 1px solid var(--border-light);
-    min-height: 250px;
-    max-height: 250px;
-    flex: 0 0 250px;
+    min-height: 56px;
+    max-height: none;
+    height: auto;
+    flex: 1 1 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .notes-events-shell,
+  .notes-events-body,
+  .notes-ruled-container,
+  .ruled-textarea {
+    overflow-y: visible;
   }
 
   .notes-panel-header {
@@ -1350,9 +1425,86 @@
     gap: 6px;
   }
 
+  .notes-editor-header-row {
+    align-items: center;
+    gap: 8px;
+  }
+
+  .notes-editor-header-row .notes-title {
+    min-width: 0;
+    flex: 1;
+    row-gap: 2px;
+  }
+
+  .notes-title-subtitle {
+    margin-left: 22px;
+    margin-top: 1px;
+    font-size: 0.56rem;
+    letter-spacing: 0.1em;
+  }
+
+  .notes-editor-header-row .notes-title-main {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .notes-header-label-controls {
+    display: grid;
+    flex: 0 0 auto;
+    width: 168px;
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) 28px;
+  }
+
+  .notes-header-label-controls .notes-label-input {
+    height: 30px;
+    padding: 6px 28px 6px 8px;
+    font-size: 0.7rem;
+    text-align: left;
+  }
+
+  .notes-header-label-controls .notes-label-color-trigger {
+    right: 7px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .notes-header-label-controls .notes-label-color-preview {
+    width: 12px;
+    height: 12px;
+  }
+
+  .notes-header-label-controls .notes-label-palette-list {
+    right: 0;
+    bottom: calc(100% + 6px);
+    padding: 6px;
+    gap: 5px;
+  }
+
+  .notes-header-label-controls .notes-label-swatch {
+    width: 14px;
+    height: 14px;
+  }
+
+  .notes-header-label-controls .notes-label-add-btn {
+    width: 28px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .notes-header-label-controls .notes-label-add-btn svg {
+    width: 11px;
+    height: 11px;
+  }
+
   .notes-editor-body {
     gap: 6px;
-    padding: 0 12px 6px;
+    padding: 0 12px calc(6px + var(--app-floating-ui-bottom, env(safe-area-inset-bottom)));
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .ruled-textarea {
@@ -1398,32 +1550,32 @@
     height: 9px;
   }
 
-  .notes-labels-controls {
+  .notes-inline-label-controls {
     width: min(210px, 100%);
     margin: 0 auto;
     gap: 7px;
     grid-template-columns: minmax(0, 1fr) 32px;
   }
 
-  .notes-label-input {
+  .notes-inline-label-controls .notes-label-input {
     padding: 7px 32px 7px 10px;
     font-size: 0.76rem;
     text-align: center;
   }
 
-  .notes-label-add-btn {
+  .notes-inline-label-controls .notes-label-add-btn {
     width: 32px;
     height: 32px;
   }
 
-  .notes-label-add-btn svg {
+  .notes-inline-label-controls .notes-label-add-btn svg {
     width: 12px;
     height: 12px;
   }
 
   .notes-list { max-height: 200px; }
 
-  .day-cell { font-size: 0.76rem; }
+  .day-cell { font-size: 0.72rem; min-height: 25px; }
 
   .event-dots-container {
     bottom: 1.5px;
@@ -1456,12 +1608,48 @@
       calc(8px + env(safe-area-inset-bottom))
       calc(6px + env(safe-area-inset-left));
   }
-  .hero-image-wrapper { height: 161px; }
+  .hero-image-wrapper { height: 154px; }
   .hero-month { font-size: 1.6rem; }
+  .calendar-shadow-layer {
+    --mobile-calendar-top-gap: 0px;
+    --mobile-calendar-bottom-gap: 1px;
+    margin-top: var(--mobile-calendar-top-gap);
+    margin-bottom: var(--mobile-calendar-bottom-gap);
+    flex: 1 1 auto;
+    height: calc(100% - var(--mobile-calendar-top-gap) - var(--mobile-calendar-bottom-gap));
+    max-height: calc(100% - var(--mobile-calendar-top-gap) - var(--mobile-calendar-bottom-gap));
+  }
+
+  @supports (-moz-appearance: none) {
+    .calendar-shadow-layer {
+      --mobile-calendar-top-gap: 32px;
+      --mobile-calendar-bottom-gap: 18px;
+    }
+  }
+
+  .nav-btn {
+    bottom: max(16px, calc(10px + var(--app-floating-ui-bottom, env(safe-area-inset-bottom))));
+  }
   .calendar-panel { padding: 10px 12px 14px; }
-  .calendar-grid { gap: 2px; }
-  .day-cell { font-size: 0.72rem; border-radius: 4px; }
+  .calendar-grid {
+    gap: 1px;
+    grid-template-rows: auto repeat(6, minmax(22px, auto));
+  }
+  .day-cell { font-size: 0.68rem; min-height: 22px; border-radius: 4px; }
   .day-header { font-size: 0.58rem; letter-spacing: 0.5px; }
+
+  .content-area {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .notes-panel {
+    min-height: 52px;
+  }
+
+  .notes-title-subtitle {
+    margin-left: 20px;
+    font-size: 0.52rem;
+  }
 }
 
 /* ===== PRINT ===== */
