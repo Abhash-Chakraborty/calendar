@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
 import { gsap } from 'gsap'
 import SpiralBinding from './components/SpiralBinding'
 import HeroSection from './components/HeroSection'
@@ -63,6 +63,8 @@ function App() {
   const themeSyncTimerRef = useRef(null)
   const [introRunning, setIntroRunning] = useState(targetMonth > 0)
   const [introAssetsReady, setIntroAssetsReady] = useState(targetMonth === 0)
+  const calendarContainerRef = useRef(null)
+  const [flipViewportFrame, setFlipViewportFrame] = useState(null)
 
   const [transitionState, setTransitionState] = useState({
     active: false,
@@ -89,7 +91,7 @@ function App() {
   }, [events])
 
   useEffect(() => {
-    gsap.config({ autoSleep: 60, nullTargetWarn: false, force3D: true })
+    gsap.config({ autoSleep: 60, nullTargetWarn: false })
     gsap.defaults({ overwrite: 'auto' })
     gsap.ticker.lagSmoothing(700, 33)
   }, [])
@@ -228,44 +230,58 @@ function App() {
     gsap.killTweensOf(el)
     gsap.set(el, {
       willChange: 'transform, opacity',
-      transformPerspective: 1200,
-      backfaceVisibility: 'hidden',
+      transformOrigin: '50% 0%',
     })
 
-    const dur = introRunning ? 0.54 : 0.9
+    const dur = introRunning ? 0.54 : 0.82
+    const flipDepth = introRunning ? 20 : 34
+    const widthLift = introRunning ? 1.035 : 1.075
+    const verticalLift = introRunning ? -10 : -18
+
     const completeTransition = () => {
-      gsap.set(el, { clearProps: 'willChange,transformPerspective,backfaceVisibility' })
+      gsap.set(el, { clearProps: 'willChange' })
       setTransitionState(s => ({ ...s, active: false }))
+      setFlipViewportFrame(null)
     }
 
     if (transitionState.direction > 0) {
       gsap.fromTo(el, {
         rotationX: 0,
         y: 0,
+        z: 0,
+        scaleX: 1,
+        scaleY: 1,
         opacity: 1,
-        transformOrigin: '50% 0%',
       }, {
-        rotationX: -92,
-        y: -10,
+        rotationX: 92,
+        y: verticalLift,
+        z: flipDepth,
+        scaleX: widthLift,
+        scaleY: 1.015,
         opacity: 0,
         duration: dur,
-        ease: introRunning ? 'power2.inOut' : 'power3.inOut',
+        ease: introRunning ? 'power2.inOut' : 'power3.in',
         force3D: true,
         overwrite: 'auto',
         onComplete: completeTransition,
       })
     } else {
       gsap.fromTo(el, {
-        rotationX: -92,
-        y: -10,
+        rotationX: 92,
+        y: verticalLift,
+        z: flipDepth,
+        scaleX: widthLift,
+        scaleY: 1.015,
         opacity: 0,
-        transformOrigin: '50% 0%',
       }, {
         rotationX: 0,
         y: 0,
+        z: 0,
+        scaleX: 1,
+        scaleY: 1,
         opacity: 1,
         duration: dur,
-        ease: introRunning ? 'power2.inOut' : 'power3.inOut',
+        ease: introRunning ? 'power2.inOut' : 'power3.out',
         force3D: true,
         overwrite: 'auto',
         onComplete: completeTransition,
@@ -274,9 +290,43 @@ function App() {
 
     return () => {
       gsap.killTweensOf(el)
-      gsap.set(el, { clearProps: 'willChange,transformPerspective,backfaceVisibility' })
+      gsap.set(el, { clearProps: 'willChange' })
     }
   }, [transitionState.active, transitionState.direction, introRunning])
+
+  useLayoutEffect(() => {
+    if (!transitionState.active) {
+      return
+    }
+
+    const container = calendarContainerRef.current
+    if (!container) {
+      return
+    }
+
+    const syncFrame = () => {
+      const rect = container.getBoundingClientRect()
+      const radius = window.getComputedStyle(container).borderRadius
+
+      setFlipViewportFrame({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        borderRadius: radius,
+      })
+    }
+
+    syncFrame()
+
+    window.addEventListener('resize', syncFrame)
+    window.addEventListener('scroll', syncFrame, true)
+
+    return () => {
+      window.removeEventListener('resize', syncFrame)
+      window.removeEventListener('scroll', syncFrame, true)
+    }
+  }, [transitionState.active])
 
   // Intro flip sequence: January → current month
   useEffect(() => {
@@ -535,17 +585,33 @@ function App() {
 
     if (isAnimLayer) {
       const isNextFlip = transitionState.direction > 0
+    const layerStyle = {
+      opacity: isNextFlip ? 1 : 0,
+      transform: `rotateX(${isNextFlip ? 0 : 92}deg)`,
+    }
+
+      if (transitionState.active && flipViewportFrame) {
+        layerStyle.top = flipViewportFrame.top
+        layerStyle.left = flipViewportFrame.left
+        layerStyle.width = flipViewportFrame.width
+        layerStyle.height = flipViewportFrame.height
+        layerStyle.borderRadius = flipViewportFrame.borderRadius
+      } else {
+        layerStyle.top = 0
+        layerStyle.left = 0
+        layerStyle.width = 0
+        layerStyle.height = 0
+      }
 
       return (
         <div
           key={keyStr}
-          className="calendar-inner-clip anim-layer"
-          style={{
-            opacity: isNextFlip ? 1 : 0,
-            transform: `rotateX(${isNextFlip ? 0 : -110}deg)`,
-          }}
+          className="anim-layer"
+          style={layerStyle}
         >
-          {pageContent}
+          <div className="calendar-inner-clip anim-layer-surface binding-hole-mask">
+            {pageContent}
+          </div>
         </div>
       )
     }
@@ -565,7 +631,7 @@ function App() {
         </a>
         <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </div>
-      <div className="calendar-shadow-layer">
+      <div className={`calendar-shadow-layer ${transitionState.active ? 'flip-active' : ''}`}>
         {Array.from({ length: Math.max(0, stackLayerCount) }, (_, index) => {
           const layer = index + 1
           const offset = layer * stackLayerSpacing
@@ -585,7 +651,7 @@ function App() {
         
         <SpiralBinding />
         
-        <div className="calendar-container">
+        <div className="calendar-container" ref={calendarContainerRef}>
           {!transitionState.active ? (
             renderPage(currentMonth, currentYear, 'static-normal', false)
           ) : transitionState.direction > 0 ? (
@@ -593,16 +659,30 @@ function App() {
           ) : (
             renderPage(transitionState.oldMonth, transitionState.oldYear, 'static-old', false)
           )}
-
-          {transitionState.active && (
-            transitionState.direction > 0 ? (
-              renderPage(transitionState.oldMonth, transitionState.oldYear, 'anim-old', true)
-            ) : (
-              renderPage(currentMonth, currentYear, 'anim-new', true)
-            )
-          )}
         </div>
       </div>
+
+      {transitionState.active && (
+        transitionState.direction > 0 ? (
+          renderPage(transitionState.oldMonth, transitionState.oldYear, 'anim-old', true)
+        ) : (
+          renderPage(currentMonth, currentYear, 'anim-new', true)
+        )
+      )}
+
+      {transitionState.active && flipViewportFrame && (
+        <div
+          className="spiral-overlay"
+          style={{
+            top: flipViewportFrame.top,
+            left: flipViewportFrame.left,
+            width: flipViewportFrame.width,
+          }}
+          aria-hidden="true"
+        >
+          <SpiralBinding renderMaskStyles={false} />
+        </div>
+      )}
 
       <div className="calendar-selection-hint" aria-hidden="true">
         <span>Click for one day. Hold + drag for range.</span>

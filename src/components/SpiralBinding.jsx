@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-export default function SpiralBinding() {
+export default function SpiralBinding({ renderMaskStyles = true }) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 720
   const holeOffset = 0
   const holeRadius = isMobile ? 4 : 4.5
@@ -37,46 +37,38 @@ export default function SpiralBinding() {
 
   return (
     <>
-      <style>{`
-        .calendar-container {
-          -webkit-mask-image: url("${svgMask}"), linear-gradient(black, black);
-          mask-image: url("${svgMask}"), linear-gradient(black, black);
-          
-          -webkit-mask-size: 100% 40px, 100% calc(100% - 40px);
-          mask-size: 100% 40px, 100% calc(100% - 40px);
-          
-          -webkit-mask-position: 0 top, 0 40px;
-          mask-position: 0 top, 0 40px;
-          
-          -webkit-mask-repeat: no-repeat;
-          mask-repeat: no-repeat;
-        }
+      {renderMaskStyles && (
+        <style>{`
+          .calendar-container,
+          .binding-hole-mask {
+            -webkit-mask-image: url("${svgMask}"), linear-gradient(black, black);
+            mask-image: url("${svgMask}"), linear-gradient(black, black);
+            
+            -webkit-mask-size: 100% 40px, 100% calc(100% - 40px);
+            mask-size: 100% 40px, 100% calc(100% - 40px);
+            
+            -webkit-mask-position: 0 top, 0 40px;
+            mask-position: 0 top, 0 40px;
+            
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+          }
 
-        .binding-hole-mask {
-          -webkit-mask-image: url("${svgMask}");
-          mask-image: url("${svgMask}");
-          -webkit-mask-size: 100% 40px;
-          mask-size: 100% 40px;
-          -webkit-mask-position: 0 top;
-          mask-position: 0 top;
-          -webkit-mask-repeat: no-repeat;
-          mask-repeat: no-repeat;
-        }
-
-        .hanger-hook {
-          position: absolute;
-          top: -20px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 12px;
-          height: 24px;
-          border: 2.5px solid #444;
-          border-bottom: none;
-          border-radius: 20px 20px 0 0;
-          box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-          z-index: -1;
-        }
-      `}</style>
+          .hanger-hook {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 24px;
+            border: 2.5px solid #444;
+            border-bottom: none;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            z-index: -1;
+          }
+        `}</style>
+      )}
       <div className="spiral-container" style={{ pointerEvents: 'none' }}>
         <div className="hanger-hook" />
         {rings.map(percent => (
