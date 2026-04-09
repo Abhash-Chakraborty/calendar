@@ -1318,6 +1318,7 @@
     perspective: none;
     transform-style: flat;
     margin-bottom: calc(22px + var(--app-safe-area-bottom, env(safe-area-inset-bottom)));
+    height: calc(100% - 12px);
   }
 
   .calendar-container { border-radius: var(--radius-lg); }
