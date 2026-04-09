@@ -14,18 +14,18 @@ const resolveAssetUrl = (path) => {
 }
 
 const MONTH_IMAGE_PATHS = [
-  '/images/01-january.jpg',
-  '/images/02-february.jpg',
-  '/images/03-march.jpg',
-  '/images/04-april.jpg',
-  '/images/05-may.jpg',
-  '/images/06-june.jpg',
-  '/images/07-july.jpg',
-  '/images/08-august.jpg',
-  '/images/09-september.jpg',
-  '/images/10-october.jpg',
-  '/images/11-november.jpg',
-  '/images/12-december.jpg',
+  '/images/01-january.webp',
+  '/images/02-february.webp',
+  '/images/03-march.webp',
+  '/images/04-april.webp',
+  '/images/05-may.webp',
+  '/images/06-june.webp',
+  '/images/07-july.webp',
+  '/images/08-august.webp',
+  '/images/09-september.webp',
+  '/images/10-october.webp',
+  '/images/11-november.webp',
+  '/images/12-december.webp',
 ]
 
 export const MONTH_IMAGES = MONTH_IMAGE_PATHS.reduce((accumulator, imagePath, monthIndex) => {
