@@ -1034,7 +1034,7 @@
 .app-footer-credit {
   position: fixed;
   left: 50%;
-  bottom: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
@@ -1251,7 +1251,13 @@
 }
 
 @media (max-width: 720px) {
-  body { padding: 16px 10px; }
+  body {
+    padding:
+      calc(16px + env(safe-area-inset-top))
+      calc(10px + env(safe-area-inset-right))
+      calc(16px + env(safe-area-inset-bottom))
+      calc(10px + env(safe-area-inset-left));
+  }
 
   .theme-toggle { top: 12px; right: 12px; width: 42px; height: 42px; }
   .logo-badge { top: 12px; left: 12px; width: 42px; height: 42px; }
@@ -1443,7 +1449,13 @@
 }
 
 @media (max-width: 400px) {
-  body { padding: 8px 6px; }
+  body {
+    padding:
+      calc(8px + env(safe-area-inset-top))
+      calc(6px + env(safe-area-inset-right))
+      calc(8px + env(safe-area-inset-bottom))
+      calc(6px + env(safe-area-inset-left));
+  }
   .hero-image-wrapper { height: 161px; }
   .hero-month { font-size: 1.6rem; }
   .calendar-panel { padding: 10px 12px 14px; }

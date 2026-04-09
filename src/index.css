@@ -93,6 +93,7 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
 }
 
 body {
@@ -101,11 +102,17 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px 20px;
+  padding:
+    calc(40px + env(safe-area-inset-top))
+    calc(20px + env(safe-area-inset-right))
+    calc(40px + env(safe-area-inset-bottom))
+    calc(20px + env(safe-area-inset-left));
   transition: background var(--transition), color var(--transition);
 }
 
