@@ -52,7 +52,7 @@
     rgba(0,0,0,0.015) 28px,
     rgba(0,0,0,0.015) 29px
   );
-  --theme-sync-duration: 0.38s;
+  --theme-sync-duration: 0.22s;
   --theme-sync-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --app-visual-height: 100vh;
   --app-viewport-offset-bottom: 0px;
@@ -150,7 +150,7 @@ body::before {
 html.theme-syncing *,
 html.theme-syncing *::before,
 html.theme-syncing *::after {
-  transition-property: background, background-color, color, border-color, outline-color, box-shadow, text-shadow, fill, stroke, opacity !important;
+  transition-property: background, background-color, color, border-color, outline-color, box-shadow, text-shadow, fill, stroke !important;
   transition-duration: var(--theme-sync-duration) !important;
   transition-timing-function: var(--theme-sync-ease) !important;
   transition-delay: 0ms !important;

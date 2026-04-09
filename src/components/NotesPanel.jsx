@@ -26,36 +26,8 @@ export default function NotesPanel({
   const [draftLabelName, setDraftLabelName] = useState('')
   const [draftLabelColor, setDraftLabelColor] = useState(LABEL_COLORS[0])
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
-  const [isMobileView, setIsMobileView] = useState(() => (
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches
-  ))
   const canAddLabel = draftLabelName.trim().length > 0 && labels.length < 2
   const previousCanAddRef = useRef(canAddLabel)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined
-    }
-
-    const mediaQuery = window.matchMedia('(max-width: 720px)')
-    const syncMobileView = () => {
-      setIsMobileView(mediaQuery.matches)
-    }
-
-    syncMobileView()
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', syncMobileView)
-      return () => {
-        mediaQuery.removeEventListener('change', syncMobileView)
-      }
-    }
-
-    mediaQuery.addListener(syncMobileView)
-    return () => {
-      mediaQuery.removeListener(syncMobileView)
-    }
-  }, [])
 
   const sortedEvents = [...events].sort((a, b) => {
     if (!a.time && !b.time) return 0
@@ -324,7 +296,7 @@ export default function NotesPanel({
 
   const renderLabelControls = (className) => (
     <div className={`notes-labels-controls ${className}`.trim()}>
-      <div className="notes-label-input-wrap" ref={paletteWrapRef}>
+      <div className={`notes-label-input-wrap${isPaletteOpen ? ' open' : ''}`} ref={paletteWrapRef}>
         <input
           className="notes-label-input"
           type="text"
@@ -457,7 +429,7 @@ export default function NotesPanel({
               {subtitle && <span className="notes-title-subtitle">{subtitle}</span>}
             </h3>
 
-            {labels.length < 2 && isMobileView && renderLabelControls('notes-header-label-controls')}
+            {labels.length < 2 && renderLabelControls('notes-header-label-controls')}
           </div>
         </div>
 
@@ -493,8 +465,6 @@ export default function NotesPanel({
                 </div>
               ))}
             </div>
-
-            {labels.length < 2 && !isMobileView && renderLabelControls('notes-inline-label-controls')}
           </div>
         </div>
       </section>

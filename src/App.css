@@ -28,7 +28,7 @@
   justify-content: center;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition);
-  z-index: 1000;
+  z-index: 1600;
   overflow: hidden;
 }
 
@@ -45,7 +45,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-sm);
-  z-index: 1000;
+  z-index: 1600;
   transition: all var(--transition);
 }
 
@@ -158,6 +158,9 @@
   border-radius: inherit;
   transition: background var(--transition);
   min-height: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .hero-section {
@@ -201,6 +204,8 @@
   transform-origin: top center;
   perspective: 1200px;
   transform-box: fill-box;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .anim-layer-surface {
@@ -213,6 +218,9 @@
   overflow: hidden;
   background: var(--bg-card);
   box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Hide the placeholder stacked pages I had on container earlier to use unified shadow-layer ones */
@@ -256,7 +264,7 @@
 .spiral-overlay {
   position: fixed;
   height: 0;
-  z-index: 130;
+  z-index: 86;
   pointer-events: none;
 }
 
@@ -317,6 +325,9 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .hero-shimmer {
@@ -518,7 +529,7 @@
   display: grid;
   grid-template-columns: 1fr var(--notes-panel-width);
   position: relative;
-  z-index: 2;
+  z-index: 8;
   flex: 1;
   min-height: 0;
 }
@@ -720,6 +731,7 @@
 
 /* ===== NOTES PANEL ===== */
 .notes-panel {
+  --notes-label-text-max-width: 11ch;
   border-left: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
@@ -727,46 +739,64 @@
   transition: background var(--transition);
   scrollbar-gutter: stable;
   min-height: 0;
+  position: relative;
+  z-index: 12;
   overflow: hidden;
 }
 
 .notes-panel-header {
   padding: 12px 24px; /* match inner padding */
+  position: relative;
+  z-index: 20;
 }
 
 .notes-section-header {
   flex-shrink: 0;
   background: var(--bg-secondary);
+  overflow: visible;
 }
 
 .notes-title {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  display: flex;
+  letter-spacing: 0.3px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  column-gap: 8px;
+  row-gap: 2px;
   color: var(--text-primary);
 }
 
-.notes-title svg { color: var(--accent); }
+.notes-title svg {
+  color: var(--accent);
+  display: block;
+  flex-shrink: 0;
+  grid-column: 1;
+  grid-row: 1;
+}
 
 .notes-title-main {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
   line-height: 1.1;
   white-space: nowrap;
 }
 
 .notes-title-subtitle {
-  flex-basis: 100%;
-  margin-left: 26px;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-left: 0;
   margin-top: 2px;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   line-height: 1.1;
-  letter-spacing: 0.08em;
+  letter-spacing: 0em;
   text-transform: uppercase;
   font-weight: 500;
   color: var(--text-muted);
+  text-align: left;
 }
 
 .notes-editor-header-row {
@@ -774,6 +804,20 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  position: relative;
+  z-index: 24;
+}
+
+.notes-editor-header-row .notes-title {
+  min-width: 0;
+  flex: 1;
+  row-gap: 2px;
+}
+
+.notes-editor-header-row .notes-title-main {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Custom Scrollbar Utility */
@@ -920,13 +964,14 @@
   flex-shrink: 0;
 }
 
-  .notes-label-name {
-    line-height: 1;
-    max-width: 6ch;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.notes-label-name {
+  line-height: 1;
+  min-width: 0;
+  max-width: var(--notes-label-text-max-width);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .notes-label-remove {
   width: 18px;
@@ -961,12 +1006,64 @@
 }
 
 .notes-header-label-controls {
-  display: none;
+  display: grid;
+  flex: 0 0 auto;
+  width: 156px;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 34px;
+}
+
+.notes-header-label-controls .notes-label-input {
+  height: 36px;
+  padding: 8px 30px 8px 10px;
+  font-size: 0.76rem;
+  text-align: left;
+}
+
+.notes-header-label-controls .notes-label-color-trigger {
+  right: 8px;
+  width: 16px;
+  height: 16px;
+}
+
+.notes-header-label-controls .notes-label-color-preview {
+  width: 13px;
+  height: 13px;
+}
+
+.notes-header-label-controls .notes-label-palette-list {
+  right: 0;
+  top: calc(100% + 6px);
+  bottom: auto;
+  transform-origin: center top;
+  padding: 6px;
+  gap: 5px;
+}
+
+.notes-header-label-controls .notes-label-swatch {
+  width: 15px;
+  height: 15px;
+}
+
+.notes-header-label-controls .notes-label-add-btn {
+  width: 34px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.notes-header-label-controls .notes-label-add-btn svg {
+  width: 12px;
+  height: 12px;
 }
 
 .notes-label-input-wrap {
   position: relative;
   min-width: 0;
+  z-index: 30;
+}
+
+.notes-label-input-wrap.open {
+  z-index: 1250;
 }
 
 .notes-label-input {
@@ -1019,8 +1116,9 @@
 .notes-label-palette-list {
   position: absolute;
   right: 1px;
-  transform-origin: center bottom;
-  bottom: calc(100% + 8px);
+  transform-origin: center top;
+  top: calc(100% + 8px);
+  bottom: auto;
   display: none;
   flex-direction: column;
   gap: 6px;
@@ -1029,7 +1127,7 @@
   border: 1px solid var(--border-light);
   background: color-mix(in srgb, var(--bg-card) 94%, white 6%);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-  z-index: 20;
+  z-index: 1260;
 }
 
 .notes-label-swatch {
@@ -1321,6 +1419,7 @@
       calc(16px + env(safe-area-inset-bottom))
       calc(10px + env(safe-area-inset-left));
   }
+  .app-wrapper { height: 90%; }
 
   .theme-toggle { top: 12px; right: 12px; width: 42px; height: 42px; }
   .logo-badge { top: 12px; left: 12px; width: 42px; height: 42px; }
@@ -1429,6 +1528,7 @@
   .notes-panel {
     border-left: none;
     border-top: 1px solid var(--border-light);
+    background: var(--bg-card);
     min-height: 56px;
     max-height: none;
     height: auto;
@@ -1450,6 +1550,10 @@
     padding: 6px 12px;
   }
 
+  .notes-section-header {
+    background: var(--bg-card);
+  }
+
   .notes-title {
     font-size: 0.88rem;
     gap: 6px;
@@ -1467,10 +1571,11 @@
   }
 
   .notes-title-subtitle {
-    margin-left: 22px;
+    margin-left: 0;
     margin-top: 1px;
     font-size: 0.56rem;
     letter-spacing: 0.1em;
+    text-align: left;
   }
 
   .notes-editor-header-row .notes-title-main {
@@ -1507,7 +1612,8 @@
 
   .notes-header-label-controls .notes-label-palette-list {
     right: 0;
-    bottom: calc(100% + 6px);
+    top: calc(100% + 6px);
+    bottom: auto;
     padding: 6px;
     gap: 5px;
   }
@@ -1638,6 +1744,7 @@
       calc(8px + env(safe-area-inset-bottom))
       calc(6px + env(safe-area-inset-left));
   }
+  .app-wrapper { height: 95%; }
   .hero-image-wrapper { height: 154px; }
   .hero-month { font-size: 1.6rem; }
   .calendar-shadow-layer {
@@ -1677,8 +1784,9 @@
   }
 
   .notes-title-subtitle {
-    margin-left: 20px;
+    margin-left: 0;
     font-size: 0.52rem;
+    text-align: left;
   }
 }
 
@@ -1697,7 +1805,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  z-index: 100;
+  z-index: 1500;
 }
 
 .hero-controls {

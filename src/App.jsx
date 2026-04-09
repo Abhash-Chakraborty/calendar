@@ -61,6 +61,7 @@ function App() {
   const introTimerRef = useRef(null)
   const introReadyTimerRef = useRef(null)
   const themeSyncTimerRef = useRef(null)
+  const themePersistTimerRef = useRef(null)
   const [introRunning, setIntroRunning] = useState(targetMonth > 0)
   const [introAssetsReady, setIntroAssetsReady] = useState(targetMonth === 0)
   const calendarContainerRef = useRef(null)
@@ -79,7 +80,32 @@ function App() {
   // Apply theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('wallCalendarTheme', theme)
+
+    const persistTheme = () => {
+      localStorage.setItem('wallCalendarTheme', theme)
+      themePersistTimerRef.current = null
+    }
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(persistTheme, { timeout: 700 })
+      themePersistTimerRef.current = idleId
+
+      return () => {
+        if (themePersistTimerRef.current !== null) {
+          window.cancelIdleCallback(themePersistTimerRef.current)
+          themePersistTimerRef.current = null
+        }
+      }
+    }
+
+    themePersistTimerRef.current = window.setTimeout(persistTheme, 0)
+
+    return () => {
+      if (themePersistTimerRef.current !== null) {
+        window.clearTimeout(themePersistTimerRef.current)
+        themePersistTimerRef.current = null
+      }
+    }
   }, [theme])
 
   // Save notes & events
@@ -190,6 +216,7 @@ function App() {
 
     if (themeSyncTimerRef.current) {
       window.clearTimeout(themeSyncTimerRef.current)
+      themeSyncTimerRef.current = null
     }
 
     setTheme(t => t === 'dark' ? 'light' : 'dark')
@@ -197,19 +224,22 @@ function App() {
     const toggleButton = document.querySelector('.theme-toggle')
     if (toggleButton) {
       gsap.killTweensOf(toggleButton)
+      gsap.set(toggleButton, { rotate: 0, willChange: 'transform' })
       gsap.to(toggleButton, {
-        rotate: '+=180',
-        duration: 0.55,
-        ease: 'power2.inOut',
+        rotate: 180,
+        duration: 0.34,
+        ease: 'power2.out',
         overwrite: 'auto',
-        force3D: true,
+        onComplete: () => {
+          gsap.set(toggleButton, { clearProps: 'transform,willChange' })
+        },
       })
     }
 
     themeSyncTimerRef.current = window.setTimeout(() => {
       root.classList.remove('theme-syncing')
       themeSyncTimerRef.current = null
-    }, 420)
+    }, 220)
   }, [])
 
   useEffect(() => {
@@ -217,6 +247,7 @@ function App() {
       if (themeSyncTimerRef.current) {
         window.clearTimeout(themeSyncTimerRef.current)
       }
+
       document.documentElement.classList.remove('theme-syncing')
     }
   }, [])
@@ -241,7 +272,6 @@ function App() {
     const completeTransition = () => {
       gsap.set(el, { clearProps: 'willChange' })
       setTransitionState(s => ({ ...s, active: false }))
-      setFlipViewportFrame(null)
     }
 
     if (transitionState.direction > 0) {
@@ -304,7 +334,9 @@ function App() {
       return
     }
 
-    const syncFrame = () => {
+    let frameRequestId = null
+
+    const updateFrame = () => {
       const rect = container.getBoundingClientRect()
       const radius = window.getComputedStyle(container).borderRadius
 
@@ -317,7 +349,18 @@ function App() {
       })
     }
 
-    syncFrame()
+    const syncFrame = () => {
+      if (frameRequestId !== null) {
+        return
+      }
+
+      frameRequestId = window.requestAnimationFrame(() => {
+        frameRequestId = null
+        updateFrame()
+      })
+    }
+
+    updateFrame()
 
     window.addEventListener('resize', syncFrame)
     window.addEventListener('scroll', syncFrame, true)
@@ -325,6 +368,10 @@ function App() {
     return () => {
       window.removeEventListener('resize', syncFrame)
       window.removeEventListener('scroll', syncFrame, true)
+
+      if (frameRequestId !== null) {
+        window.cancelAnimationFrame(frameRequestId)
+      }
     }
   }, [transitionState.active])
 
@@ -558,7 +605,7 @@ function App() {
               rangeStart={rangeStart}
               rangeEnd={rangeEnd}
               direction={direction}
-              enableMonthCellAnimation={!introRunning}
+              enableMonthCellAnimation={!introRunning && !transitionState.active}
               events={events}
               onSingleDaySelect={handleSingleDaySelect}
               onRangeSelect={handleRangeSelection}
