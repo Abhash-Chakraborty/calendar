@@ -4,7 +4,7 @@ import { HOLIDAYS } from '../data/constants'
 
 export default function CalendarGrid({
   month, year, rangeStart, rangeEnd, direction, events,
-  onSingleDaySelect, onRangeSelect, onShowTooltip, onHideTooltip
+  onSingleDaySelect, onRangeSelect, onShowTooltip, onHideTooltip, isLowMotion = false
 }) {
   const gridRef = useRef(null)
   const prevMonth = useRef(month)
@@ -93,6 +93,8 @@ export default function CalendarGrid({
     if (prevMonth.current === month) return
     prevMonth.current = month
 
+    if (isLowMotion) return
+
     const dayCells = gridRef.current?.querySelectorAll('.day-cell:not(.other-month)')
     if (dayCells && dayCells.length) {
       gsap.killTweensOf(dayCells)
@@ -106,6 +108,7 @@ export default function CalendarGrid({
         y: 0,
         duration: 0.32,
         ease: 'power2.out',
+        overwrite: 'auto',
         stagger: {
           each: 0.012,
           from: direction >= 0 ? 'start' : 'end',
@@ -113,9 +116,11 @@ export default function CalendarGrid({
         clearProps: 'opacity,transform',
       })
     }
-  }, [month, direction])
+  }, [month, direction, isLowMotion])
 
   useEffect(() => {
+    if (isLowMotion) return
+
     const activeCells = gridRef.current?.querySelectorAll('.day-cell.range-start, .day-cell.range-end, .day-cell.in-range')
     if (!activeCells?.length) return
 
@@ -128,13 +133,14 @@ export default function CalendarGrid({
       y: 0,
       duration: 0.26,
       ease: 'power2.out',
+      overwrite: 'auto',
       stagger: {
         each: 0.014,
         from: 'center',
       },
       clearProps: 'transform',
     })
-  }, [month, rangeStart, rangeEnd])
+  }, [month, rangeStart, rangeEnd, isLowMotion])
 
   const updateRangeFromPoint = useCallback((clientX, clientY) => {
     const state = interactionRef.current
@@ -246,26 +252,32 @@ export default function CalendarGrid({
       rangeActive: false,
     }
 
-    gsap.fromTo(event.currentTarget, {
-      scale: 0.92,
-    }, {
-      scale: 1,
-      duration: 0.24,
-      ease: 'back.out(1.8)',
-      clearProps: 'transform',
-    })
+    if (!isLowMotion) {
+      gsap.fromTo(event.currentTarget, {
+        scale: 0.92,
+      }, {
+        scale: 1,
+        duration: 0.2,
+        ease: 'power2.out',
+        overwrite: 'auto',
+        clearProps: 'transform',
+      })
+    }
 
     pressTimerRef.current = window.setTimeout(() => {
       interactionRef.current.rangeActive = true
       onRangeSelect(day, day)
 
-      gsap.fromTo(event.currentTarget, {
-        boxShadow: '0 0 0 rgba(46,134,171,0)',
-      }, {
-        boxShadow: '0 0 0 8px rgba(46,134,171,0.08)',
-        duration: 0.28,
-        ease: 'power2.out',
-      })
+      if (!isLowMotion) {
+        gsap.fromTo(event.currentTarget, {
+          boxShadow: '0 0 0 rgba(46,134,171,0)',
+        }, {
+          boxShadow: '0 0 0 8px rgba(46,134,171,0.08)',
+          duration: 0.2,
+          ease: 'power1.out',
+          overwrite: 'auto',
+        })
+      }
     }, 190)
   }
 

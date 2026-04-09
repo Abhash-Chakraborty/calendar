@@ -1,4 +1,4 @@
-# Calendar v0.0.1 - Frontend Engineering Challenge
+# Calendar - Frontend Engineering Challenge
 
 This project is my submission for the Frontend Engineering Challenge to build an interactive calendar component inspired by a static reference design. I focused on translating the visual concept into a usable, responsive, and polished product.
 
@@ -81,6 +81,6 @@ npm run preview
 
 ## Submission Links
 
-- Repository: `<add-repo-link>`
-- Video Demonstration (required): `<add-video-link>`
-- Live Demo (optional): `<add-live-demo-link>`
+- Repository: `https://github.com/Abhash-Chakraborty/calendar`
+- Video Demonstration (required): `https://drive.google.com/file/d/18AV6NcxN3AjZrTGO5gV2T107FUud_rFS/view?usp=sharing`
+- Live Demo (optional): `https://calendar.abhashchakraborty.tech/`

@@ -1,13 +1,18 @@
 import { useRef } from 'react'
 import { gsap } from 'gsap'
 
-export default function MonthNav({ monthName, year, onPrev, onNext, disablePrev, disableNext }) {
+export default function MonthNav({ monthName, year, onPrev, onNext, disablePrev, disableNext, isLowMotion = false, isAnimLayer = false }) {
   const titleRef = useRef(null)
   const prevRef = useRef(null)
   const nextRef = useRef(null)
 
   const handleNav = (cb, disabled, direction) => {
     if (disabled) return
+
+    if (isLowMotion) {
+      cb()
+      return
+    }
 
     const button = direction < 0 ? prevRef.current : nextRef.current
     const titleShift = direction < 0 ? 6 : -6
@@ -28,6 +33,7 @@ export default function MonthNav({ monthName, year, onPrev, onNext, disablePrev,
         ease: 'power2.out',
         yoyo: true,
         repeat: 1,
+        overwrite: 'auto',
         clearProps: 'y,filter',
       }, 0)
       .fromTo(button, {
@@ -40,16 +46,17 @@ export default function MonthNav({ monthName, year, onPrev, onNext, disablePrev,
         ease: 'power2.out',
         yoyo: true,
         repeat: 1,
+        overwrite: 'auto',
       }, 0)
 
     cb()
   }
 
   return (
-    <div className="month-nav">
+    <div className={`month-nav ${isAnimLayer ? 'month-nav-anim' : ''}`}>
       <button
         ref={prevRef}
-        className={`nav-btn nav-btn-prev ${disablePrev ? 'nav-btn-disabled' : ''}`}
+        className={`nav-btn nav-btn-prev ${disablePrev ? 'nav-btn-disabled' : ''} ${isAnimLayer ? 'nav-btn-layer-clone' : ''}`}
         onClick={() => handleNav(onPrev, disablePrev, -1)}
         aria-label="Previous month"
         disabled={disablePrev}
@@ -62,7 +69,7 @@ export default function MonthNav({ monthName, year, onPrev, onNext, disablePrev,
       </div>
       <button
         ref={nextRef}
-        className={`nav-btn nav-btn-next ${disableNext ? 'nav-btn-disabled' : ''}`}
+        className={`nav-btn nav-btn-next ${disableNext ? 'nav-btn-disabled' : ''} ${isAnimLayer ? 'nav-btn-layer-clone' : ''}`}
         onClick={() => handleNav(onNext, disableNext, 1)}
         aria-label="Next month"
         disabled={disableNext}

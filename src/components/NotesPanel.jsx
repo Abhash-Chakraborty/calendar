@@ -12,6 +12,7 @@ export default function NotesPanel({
   events = [],
   onDeleteEvent,
   onEditEvent,
+  isLowMotion = false,
 }) {
   const eventsShellRef = useRef(null)
   const eventsInnerRef = useRef(null)
@@ -44,6 +45,24 @@ export default function NotesPanel({
 
     if (!shell || !inner || !notesTitle) return
 
+    if (isLowMotion) {
+      gsap.killTweensOf(shell)
+      gsap.killTweensOf(inner)
+      gsap.killTweensOf(notesTitle)
+      gsap.set(shell, {
+        height: hasEvents ? 'auto' : 0,
+        pointerEvents: hasEvents ? 'auto' : 'none',
+      })
+      gsap.set(inner, {
+        y: 0,
+        opacity: hasEvents ? 1 : 0,
+      })
+      hasMountedRef.current = true
+      wasVisibleRef.current = hasEvents
+      previousCountRef.current = sortedEvents.length
+      return
+    }
+
     gsap.killTweensOf(shell)
     gsap.killTweensOf(inner)
     gsap.killTweensOf(notesTitle)
@@ -72,6 +91,7 @@ export default function NotesPanel({
         scale: 1,
         duration: 0.56,
         ease: 'elastic.out(1, 0.7)',
+        overwrite: 'auto',
         clearProps: 'transform',
       })
     }
@@ -89,12 +109,14 @@ export default function NotesPanel({
           height: inner.scrollHeight,
           duration: 0.42,
           ease: 'power2.out',
+          overwrite: 'auto',
         })
         .to(inner, {
           y: 0,
           opacity: 1,
           duration: 0.34,
           ease: 'power2.out',
+          overwrite: 'auto',
         }, 0.06)
     } else if (!hasEvents && wasVisibleRef.current) {
       gsap.set(shell, { height: shell.offsetHeight })
@@ -109,17 +131,20 @@ export default function NotesPanel({
           opacity: 0,
           duration: 0.24,
           ease: 'power2.in',
+          overwrite: 'auto',
         })
         .to(shell, {
           height: 0,
           duration: 0.34,
           ease: 'power2.inOut',
+          overwrite: 'auto',
         }, 0)
     } else if (hasEvents) {
       gsap.to(shell, {
         height: inner.scrollHeight,
         duration: 0.22,
         ease: 'power2.out',
+        overwrite: 'auto',
         onComplete: () => {
           shell.style.height = 'auto'
         },
@@ -135,11 +160,23 @@ export default function NotesPanel({
       gsap.killTweensOf(inner)
       gsap.killTweensOf(notesTitle)
     }
-  }, [sortedEvents.length])
+  }, [sortedEvents.length, isLowMotion])
 
   useLayoutEffect(() => {
     const palette = paletteListRef.current
     if (!palette) return
+
+    if (isLowMotion) {
+      gsap.killTweensOf(palette)
+      gsap.set(palette, {
+        display: isPaletteOpen ? 'flex' : 'none',
+        pointerEvents: isPaletteOpen ? 'auto' : 'none',
+        autoAlpha: isPaletteOpen ? 1 : 0,
+        y: 0,
+        scale: 1,
+      })
+      return
+    }
 
     const swatches = palette.querySelectorAll('.notes-label-swatch')
     gsap.killTweensOf([palette, swatches])
@@ -158,6 +195,7 @@ export default function NotesPanel({
           scale: 1,
           duration: 0.2,
           ease: 'power2.out',
+          overwrite: 'auto',
         })
         .fromTo(swatches, {
           autoAlpha: 0,
@@ -168,6 +206,7 @@ export default function NotesPanel({
           duration: 0.18,
           stagger: 0.02,
           ease: 'power2.out',
+          overwrite: 'auto',
         }, 0.03)
 
       return () => {
@@ -181,6 +220,7 @@ export default function NotesPanel({
       scale: 0.92,
       duration: 0.14,
       ease: 'power2.in',
+      overwrite: 'auto',
       onComplete: () => {
         gsap.set(palette, { display: 'none', pointerEvents: 'none' })
       },
@@ -189,7 +229,7 @@ export default function NotesPanel({
     return () => {
       gsap.killTweensOf([palette, swatches])
     }
-  }, [isPaletteOpen])
+  }, [isPaletteOpen, isLowMotion])
 
   useEffect(() => {
     if (!isPaletteOpen) return
@@ -216,6 +256,11 @@ export default function NotesPanel({
   }, [isPaletteOpen])
 
   useEffect(() => {
+    if (isLowMotion) {
+      previousCanAddRef.current = canAddLabel
+      return
+    }
+
     const button = addBtnRef.current
     if (!button) return
 
@@ -229,11 +274,12 @@ export default function NotesPanel({
         boxShadow: '0 8px 18px rgba(46, 134, 171, 0.3)',
         duration: 0.24,
         ease: 'back.out(2.3)',
+        overwrite: 'auto',
       })
     }
 
     previousCanAddRef.current = canAddLabel
-  }, [canAddLabel])
+  }, [canAddLabel, isLowMotion])
 
   const addLabel = () => {
     const trimmed = draftLabelName.trim()

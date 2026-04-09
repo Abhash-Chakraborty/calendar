@@ -56,7 +56,9 @@
   --theme-sync-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --app-visual-height: 100vh;
   --app-viewport-offset-bottom: 0px;
-  --app-floating-ui-bottom: calc(env(safe-area-inset-bottom) + var(--app-viewport-offset-bottom));
+  --app-safe-area-bottom-measured: 0px;
+  --app-safe-area-bottom: max(env(safe-area-inset-bottom), var(--app-safe-area-bottom-measured));
+  --app-floating-ui-bottom: calc(var(--app-safe-area-bottom) + var(--app-viewport-offset-bottom) + 2px);
 }
 
 [data-theme="dark"] {

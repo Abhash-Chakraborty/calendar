@@ -11,6 +11,49 @@
   min-height: 0;
 }
 
+.app-wrapper-lite .calendar-shadow-layer {
+  perspective: none;
+  transform-style: flat;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.12),
+    0 16px 34px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.app-wrapper-lite .calendar-container::before,
+.app-wrapper-lite .calendar-container::after,
+.app-wrapper-lite .stack-layer,
+.app-wrapper-lite .spiral-ring::before {
+  display: none;
+}
+
+.app-wrapper-lite .spiral-ring {
+  box-shadow: none;
+}
+
+.app-wrapper-lite .day-cell:hover:not(.empty):not(.other-month) {
+  transform: none;
+  box-shadow: none;
+}
+
+.app-wrapper-lite .theme-toggle,
+.app-wrapper-lite .logo-badge,
+.app-wrapper-lite .nav-btn,
+.app-wrapper-lite .add-event-btn,
+.app-wrapper-lite .note-event-edit,
+.app-wrapper-lite .note-event-delete,
+.app-wrapper-lite .notes-label-color-trigger,
+.app-wrapper-lite .notes-label-add-btn,
+.app-wrapper-lite .notes-label-swatch,
+.app-wrapper-lite .notes-label-remove,
+.app-wrapper-lite .btn-save,
+.app-wrapper-lite .btn-cancel,
+.app-wrapper-lite .close-btn,
+.app-wrapper-lite .holiday-tooltip,
+.app-wrapper-lite .theme-icon {
+  transition: none !important;
+}
+
 /* ===== THEME TOGGLE ===== */
 .theme-toggle {
   position: fixed;
@@ -437,10 +480,18 @@
 
 .nav-btn-disabled,
 .nav-btn:disabled {
-  opacity: 0.32;
+  opacity: 0.86;
   pointer-events: none;
   cursor: default;
   box-shadow: none;
+}
+
+.nav-btn-layer-clone {
+  display: none !important;
+}
+
+.mobile-nav-floating {
+  display: none;
 }
 
 .nav-title {
@@ -1255,13 +1306,19 @@
     padding:
       calc(16px + env(safe-area-inset-top))
       calc(10px + env(safe-area-inset-right))
-      calc(16px + env(safe-area-inset-bottom))
+      calc(10px + env(safe-area-inset-bottom))
       calc(10px + env(safe-area-inset-left));
   }
 
   .theme-toggle { top: 12px; right: 12px; width: 42px; height: 42px; }
   .logo-badge { top: 12px; left: 12px; width: 42px; height: 42px; }
   .logo-badge img { width: 20px; height: 20px; }
+
+  .calendar-shadow-layer {
+    perspective: none;
+    transform-style: flat;
+    margin-bottom: calc(22px + var(--app-safe-area-bottom, env(safe-area-inset-bottom)));
+  }
 
   .calendar-container { border-radius: var(--radius-lg); }
 
@@ -1280,7 +1337,7 @@
   .calendar-panel { padding: 12px 14px 14px; }
 
   .calendar-section {
-    padding: 8px 24px;
+    padding: 6px 20px;
   }
 
   .calendar-grid {
@@ -1297,32 +1354,59 @@
     padding: 0;
     min-height: 0;
     display: block;
+    position: relative;
+  }
+
+  .month-nav .nav-btn {
+    display: none !important;
   }
 
   .nav-title {
     display: none;
   }
 
-  .nav-btn {
+  .mobile-nav-floating {
     position: fixed;
-    bottom: calc(8px + var(--app-floating-ui-bottom, env(safe-area-inset-bottom)));
-    width: 40px;
-    height: 40px;
-    z-index: 1300;
+    left: 0;
+    right: 0;
+    bottom: max(32px, calc(26px + var(--app-floating-ui-bottom, env(safe-area-inset-bottom))));
+    display: flex;
+    justify-content: space-between;
+    padding: 0 12px;
+    z-index: 1700;
+    pointer-events: none;
+  }
+
+  .mobile-nav-btn {
+    position: relative;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--bg-card) 92%, var(--accent) 8%);
-    border-color: color-mix(in srgb, var(--border) 70%, var(--accent) 30%);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+    background: color-mix(in srgb, var(--bg-card) 86%, var(--accent) 14%);
+    border-color: color-mix(in srgb, var(--border) 58%, var(--accent) 42%);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.2);
+    color: color-mix(in srgb, var(--text-primary) 76%, var(--accent-dark) 24%);
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto;
   }
 
-  .nav-btn-prev {
-    left: 10px;
-    margin-left: 0;
+  .mobile-nav-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 3;
   }
 
-  .nav-btn-next {
-    right: 10px;
-    margin-right: 0;
+  .app-footer-credit {
+    bottom: max(32px, calc(26px + var(--app-floating-ui-bottom, env(safe-area-inset-bottom))));
+    font-size: 0.66rem;
+    padding: 4px 10px;
+    z-index: 1100;
+  }
+
+  .nav-btn-layer-clone {
+    display: none !important;
   }
 
   .notes-events-body {
@@ -1336,9 +1420,9 @@
   .notes-panel {
     border-left: none;
     border-top: 1px solid var(--border-light);
-    min-height: 250px;
-    max-height: 250px;
-    flex: 0 0 250px;
+    min-height: 212px;
+    max-height: 212px;
+    flex: 0 0 212px;
   }
 
   .notes-panel-header {

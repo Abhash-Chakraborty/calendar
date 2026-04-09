@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 
 const EVENT_COLORS = ['#e8657a', '#6bbf59', '#30b4c5', '#9b7fd4', '#f0a04b', '#8b7355']
 
-export default function EventModal({ date, onSave, onCloseComplete, initialEvent }) {
+export default function EventModal({ date, onSave, onCloseComplete, initialEvent, isLowMotion = false }) {
   const overlayRef = useRef(null)
   const modalRef = useRef(null)
   const closingRef = useRef(false)
@@ -15,6 +15,14 @@ export default function EventModal({ date, onSave, onCloseComplete, initialEvent
     const overlay = overlayRef.current
     const modal = modalRef.current
 
+    if (isLowMotion) {
+      gsap.set(overlay, { opacity: 1 })
+      gsap.set(modal, { opacity: 1, y: 0, scale: 1 })
+      return () => {
+        gsap.killTweensOf([overlay, modal])
+      }
+    }
+
     gsap.set(overlay, { opacity: 0 })
     gsap.set(modal, { opacity: 0, y: 24, scale: 0.94 })
 
@@ -23,6 +31,7 @@ export default function EventModal({ date, onSave, onCloseComplete, initialEvent
         opacity: 1,
         duration: 0.18,
         ease: 'power2.out',
+        overwrite: 'auto',
       })
       .to(modal, {
         opacity: 1,
@@ -30,16 +39,22 @@ export default function EventModal({ date, onSave, onCloseComplete, initialEvent
         scale: 1,
         duration: 0.34,
         ease: 'back.out(1.4)',
+        overwrite: 'auto',
       }, 0)
 
     return () => {
       gsap.killTweensOf([overlay, modal])
     }
-  }, [])
+  }, [isLowMotion])
 
   const requestClose = () => {
     if (closingRef.current) return
     closingRef.current = true
+
+    if (isLowMotion) {
+      onCloseComplete?.()
+      return
+    }
 
     gsap.timeline({
       onComplete: () => {
@@ -52,11 +67,13 @@ export default function EventModal({ date, onSave, onCloseComplete, initialEvent
         scale: 0.97,
         duration: 0.18,
         ease: 'power2.in',
+        overwrite: 'auto',
       })
       .to(overlayRef.current, {
         opacity: 0,
         duration: 0.16,
         ease: 'power2.in',
+        overwrite: 'auto',
       }, 0.02)
   }
 
